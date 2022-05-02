@@ -94,11 +94,15 @@ func ExampleSeparatedList() {
 	output, remain, err := parser.Parse([]rune("123,456,789"))
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
+	output, remain, err = parser.Parse([]rune("123,abc"))
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
+
 	output, remain, err = parser.Parse([]rune("abc"))
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
 	// output:[]string{"123", "456", "789"} remain:"" err:<nil>
+	// output:[]string{"123"} remain:",abc" err:<nil>
 	// output:[]string(nil) remain:"abc" err:<nil>
 }
 
