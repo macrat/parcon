@@ -7,13 +7,13 @@ import (
 )
 
 func ExampleOptional() {
-	parser := parcon.Optional(parcon.TagS("HELLO", "hello"))
+	parser := parcon.Optional(parcon.TagStr("HELLO", "hello"))
 
 	output, remain, err := parser.Parse([]rune("hello world"))
-	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	output, remain, err = parser.Parse([]rune("foo bar"))
-	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
 	// output:"hello" remain:" world" err:<nil>
@@ -21,13 +21,13 @@ func ExampleOptional() {
 }
 
 func ExampleOptionalWithDefault() {
-	parser := parcon.OptionalWithDefault(parcon.TagS("HELLO", "hello"), []rune("not-found"))
+	parser := parcon.OptionalWithDefault(parcon.TagStr("HELLO", "hello"), "not-found")
 
 	output, remain, err := parser.Parse([]rune("hello world"))
-	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	output, remain, err = parser.Parse([]rune("foo bar"))
-	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
 	// output:"hello" remain:" world" err:<nil>
@@ -36,15 +36,15 @@ func ExampleOptionalWithDefault() {
 
 func ExampleOr() {
 	parser := parcon.Or(
-		parcon.TagS("HELLO", "hello"),
-		parcon.TagS("WORLD", "world"),
+		parcon.TagStr("HELLO", "hello"),
+		parcon.TagStr("WORLD", "world"),
 	)
 
 	output, remain, err := parser.Parse([]rune("hello world"))
-	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	output, remain, err = parser.Parse([]rune("world hello"))
-	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	_, _, err = parser.Parse([]rune("foo bar"))
 	fmt.Printf("err:%v\n", err)
@@ -57,9 +57,9 @@ func ExampleOr() {
 
 func ExampleSequence() {
 	parser := parcon.Map(parcon.Sequence(
-		parcon.TagS("HELLO", "hello"),
+		parcon.Tag("HELLO", []rune("hello")),
 		parcon.MultiSpaces,
-		parcon.TagS("WORLD", "world"),
+		parcon.Tag("WORLD", []rune("world")),
 	), parcon.ToString)
 
 	output, remain, err := parser.Parse([]rune("hello   world"))
@@ -87,7 +87,7 @@ func ExamplePair() {
 func ExampleSeparatedList() {
 	parser := parcon.Map(parcon.SeparatedList(
 		0,
-		parcon.OneOfS("COMMA", ","),
+		parcon.Tag("COMMA", []rune(",")),
 		parcon.MultiDigits,
 	), parcon.ToString)
 
@@ -106,7 +106,7 @@ func ExampleSeparatedListLimited() {
 	parser := parcon.Map(parcon.SeparatedListLimited(
 		0,
 		2,
-		parcon.TagS("COMMA", ","),
+		parcon.Tag("COMMA", []rune(",")),
 		parcon.MultiDigits,
 	), parcon.ToInt)
 
@@ -118,10 +118,7 @@ func ExampleSeparatedListLimited() {
 }
 
 func ExampleMany() {
-	parser := parcon.Map(
-		parcon.Many(0, parcon.TagS("ITEM", "ab_")),
-		parcon.ToString,
-	)
+	parser := parcon.Many(0, parcon.TagStr("ITEM", "ab_"))
 
 	output, remain, err := parser.Parse([]rune("ab_ab_ab_cd_"))
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
@@ -131,10 +128,7 @@ func ExampleMany() {
 }
 
 func ExampleManyLimited() {
-	parser := parcon.Map(
-		parcon.ManyLimited(0, 2, parcon.TagS("ITEM", "ab_")),
-		parcon.ToString,
-	)
+	parser := parcon.ManyLimited(0, 2, parcon.TagStr("ITEM", "ab_"))
 
 	output, remain, err := parser.Parse([]rune("ab_ab_ab_cd_"))
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
@@ -155,13 +149,13 @@ func ExampleRepeat() {
 
 func ExampleDelimited() {
 	parser := parcon.Delimited(
-		parcon.TagS("OPEN_PAREN", "("),
-		parcon.Many(0, parcon.NoneOfS("NOT_PAREN", "()")),
-		parcon.TagS("CLOSE_PAREN", ")"),
+		parcon.Tag("OPEN_PAREN", []rune("(")),
+		parcon.NoneOfStr("NOT_PAREN", "()"),
+		parcon.Tag("CLOSE_PAREN", []rune(")")),
 	)
 
 	output, remain, err := parser.Parse([]rune("(hello world)"))
-	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
 	// output:"hello world" remain:"" err:<nil>
@@ -169,7 +163,7 @@ func ExampleDelimited() {
 
 func ExampleWithPrefix() {
 	parser := parcon.WithPrefix(
-		parcon.TagS("AT_SYMBOL", "@"),
+		parcon.Tag("AT_SYMBOL", []rune("@")),
 		parcon.MultiAlphas,
 	)
 
@@ -182,12 +176,12 @@ func ExampleWithPrefix() {
 
 func ExampleWithSuffix() {
 	parser := parcon.WithSuffix(
-		parcon.Many(1, parcon.NoneOfS("NOT_SEMICOLON", ";")),
-		parcon.TagS("SEMICOLON", ";"),
+		parcon.NoneOfStr("NOT_SEMICOLON", ";"),
+		parcon.Tag("SEMICOLON", []rune(";")),
 	)
 
 	output, remain, err := parser.Parse([]rune("hello world; foo bar;"))
-	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
 	// output:"hello world" remain:" foo bar;" err:<nil>
@@ -195,20 +189,20 @@ func ExampleWithSuffix() {
 
 func ExampleNamed() {
 	raw := parcon.Or(
-		parcon.WithPrefix(parcon.TagS("AT_SYMBOL", "@"), parcon.MultiAlphas),
-		parcon.WithPrefix(parcon.TagS("HASH_SYMBOL", "#"), parcon.MultiAlphas),
+		parcon.WithPrefix(parcon.Tag("AT_SYMBOL", []rune("@")), parcon.MultiAlphas),
+		parcon.WithPrefix(parcon.Tag("HASH_SYMBOL", []rune("#")), parcon.MultiAlphas),
 	)
 	_, _, err := raw.Parse([]rune("hello"))
 	fmt.Println("raw:", err)
 
 	named := parcon.Or(
-		parcon.Named("MENTION", parcon.WithPrefix(parcon.TagS("AT_SYMBOL", "@"), parcon.MultiAlphas)),
-		parcon.Named("TAG", parcon.WithPrefix(parcon.TagS("HASH_SYMBOL", "#"), parcon.MultiAlphas)),
+		parcon.Named("MENTION", parcon.WithPrefix(parcon.Tag("AT_SYMBOL", []rune("@")), parcon.MultiAlphas)),
+		parcon.Named("TAG", parcon.WithPrefix(parcon.Tag("HASH_SYMBOL", []rune("#")), parcon.MultiAlphas)),
 	)
 	_, _, err = named.Parse([]rune("hello"))
 	fmt.Println("named:", err)
 
 	// OUTPUT:
-	// raw: expected one of [AT_SYMBOL, multiple [ALPHA], NOTHING] [HASH_SYMBOL, multiple [ALPHA], NOTHING] but got "hello"
+	// raw: expected one of [AT_SYMBOL, ALPHA, NOTHING] [HASH_SYMBOL, ALPHA, NOTHING] but got "hello"
 	// named: expected one of [MENTION] [TAG] but got "hello"
 }

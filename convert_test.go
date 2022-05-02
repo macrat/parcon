@@ -64,7 +64,7 @@ func ExampleMatchOnly() {
 
 func ExampleReplace() {
 	parser := parcon.Many(0, parcon.Or(
-		parcon.Replace(parcon.TagS("NEWLINE", `\n`), '\n'),
+		parcon.Replace(parcon.Tag("NEWLINE", []rune(`\n`)), '\n'),
 		parcon.Anything[rune](),
 	))
 

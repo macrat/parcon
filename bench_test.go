@@ -18,7 +18,7 @@ func generateSimpleList() ([]rune, int) {
 
 func Benchmark_simpleListWithoutParcon(b *testing.B) {
 	parser := func(input []rune) [][]rune {
-		result := make([][]rune, 0, 1000)
+		var result [][]rune
 		var buf []rune
 		for _, x := range input {
 			if x == ',' {
@@ -45,11 +45,10 @@ func Benchmark_simpleListWithoutParcon(b *testing.B) {
 }
 
 func Benchmark_simpleList(b *testing.B) {
-	parser := pc.SeparatedListLimited(
+	parser := pc.SeparatedList(
 		0,
-		1000,
-		pc.TagS("COMMA", ","),
-		pc.ManyLimited(1, 5, pc.NoneOfS("NOT_COMMA", ",")),
+		pc.Tag("COMMA", []rune(",")),
+		pc.NoneOfList("NOT_COMMA", []rune{','}),
 	)
 
 	input, l := generateSimpleList()

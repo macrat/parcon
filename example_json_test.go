@@ -11,15 +11,15 @@ func ToInterface[I any](x I) (interface{}, error) {
 }
 
 var (
-	quote = pc.TagS("DOUBLE_QUOTE", `"`)
+	quote = pc.Tag("DOUBLE_QUOTE", []rune(`"`))
 
 	optionalSpaces = pc.Optional(pc.MultiSpacesOrNewlines)
 
 	str = pc.Named("STRING_LITERAL", pc.Convert(pc.Delimited(
 		quote,
 		pc.Many(0, pc.Or(
-			pc.Replace(pc.TagS("ESCAPE", `\"`), '"'),
-			pc.NoneOfS("CHARACTER", `"`),
+			pc.Replace(pc.Tag("ESCAPE", []rune(`\"`)), '"'),
+			pc.NoneOf("CHARACTER", []rune{'"'}),
 		)),
 		quote,
 	), pc.ToString))
@@ -27,18 +27,18 @@ var (
 	number = pc.Named("NUMBER_LITERAL", pc.Convert(pc.MatchOnly(pc.Sequence(
 		pc.MultiDigits,
 		pc.Optional(pc.MatchOnly(pc.Sequence(
-			pc.TagS("PERIOD", "."),
+			pc.Tag("PERIOD", []rune(".")),
 			pc.MultiDigits,
 		))),
 	)), pc.ToFloat))
 
-	listSeparator = pc.TagS("LIST_SEPARATOR", ",")
-	listStart     = pc.TagS("LIST_START", "[")
-	listEnd       = pc.TagS("LIST_END", "]")
+	listSeparator = pc.Tag("LIST_SEPARATOR", []rune(","))
+	listStart     = pc.Tag("LIST_START", []rune("["))
+	listEnd       = pc.Tag("LIST_END", []rune("]"))
 
-	objectSeparator = pc.TagS("OBJECT_SEPARATOR", ":")
-	objectStart     = pc.TagS("OBJECT_START", "{")
-	objectEnd       = pc.TagS("OBJECT_END", "}")
+	objectSeparator = pc.Tag("OBJECT_SEPARATOR", []rune(":"))
+	objectStart     = pc.Tag("OBJECT_START", []rune("{"))
+	objectEnd       = pc.Tag("OBJECT_END", []rune("}"))
 )
 
 type List struct{}

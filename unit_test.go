@@ -26,28 +26,18 @@ func ExampleOneOf() {
 	// output:"1" remain:"23 hello" err:<nil>
 }
 
-func ExampleOneOfS() {
-	parser := parcon.OneOfS("DIGIT", "0123456789")
+func ExampleOneOfList() {
+	parser := parcon.OneOfList("DIGITS", []rune("0123456789"))
 
 	output, remain, err := parser.Parse([]rune("123 hello"))
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
 	// OUTPUT:
-	// output:"1" remain:"23 hello" err:<nil>
+	// output:"123" remain:" hello" err:<nil>
 }
 
 func ExampleNoneOf() {
 	parser := parcon.NoneOf("DIGIT", []rune("0123456789"))
-
-	output, remain, err := parser.Parse([]rune("hello 123"))
-	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
-
-	// OUTPUT:
-	// output:"h" remain:"ello 123" err:<nil>
-}
-
-func ExampleNoneOfS() {
-	parser := parcon.NoneOfS("DIGIT", "0123456789")
 
 	output, remain, err := parser.Parse([]rune("hello 123"))
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
