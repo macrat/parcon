@@ -7,7 +7,7 @@ import (
 )
 
 func ExampleOptional() {
-	parser := parcon.Optional(parcon.TagS("HELLO", "hello"))
+	parser := parcon.Optional[rune, []rune](parcon.TagS("HELLO", "hello"))
 
 	output, remain, err := parser.Parse([]rune("hello world"))
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
@@ -21,7 +21,7 @@ func ExampleOptional() {
 }
 
 func ExampleOptionalWithDefault() {
-	parser := parcon.OptionalWithDefault(parcon.TagS("HELLO", "hello"), []rune("not-found"))
+	parser := parcon.OptionalWithDefault[rune](parcon.TagS("HELLO", "hello"), []rune("not-found"))
 
 	output, remain, err := parser.Parse([]rune("hello world"))
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
@@ -35,7 +35,7 @@ func ExampleOptionalWithDefault() {
 }
 
 func ExampleOr() {
-	parser := parcon.Or(
+	parser := parcon.Or[rune, []rune](
 		parcon.TagS("HELLO", "hello"),
 		parcon.TagS("WORLD", "world"),
 	)
@@ -56,7 +56,7 @@ func ExampleOr() {
 }
 
 func ExampleSequence() {
-	parser := parcon.Map(parcon.Sequence(
+	parser := parcon.Map[rune](parcon.Sequence[rune, []rune](
 		parcon.TagS("HELLO", "hello"),
 		parcon.MultiSpaces,
 		parcon.TagS("WORLD", "world"),
@@ -70,9 +70,9 @@ func ExampleSequence() {
 }
 
 func ExamplePair() {
-	parser := parcon.Pair(
-		parcon.Convert(parcon.MultiAlphas, parcon.ToString),
-		parcon.Convert(parcon.MultiDigits, parcon.ToInt),
+	parser := parcon.Pair[rune, string, int](
+		parcon.Convert[rune](parcon.MultiAlphas, parcon.ToString),
+		parcon.Convert[rune](parcon.MultiDigits, parcon.ToInt),
 	)
 
 	output, _, _ := parser.Parse([]rune("hello123"))
@@ -85,9 +85,9 @@ func ExamplePair() {
 }
 
 func ExampleSeparatedList() {
-	parser := parcon.Map(parcon.SeparatedList(
+	parser := parcon.Map[rune](parcon.SeparatedList[rune, []rune, []rune](
 		0,
-		parcon.OneOfS("COMMA", ","),
+		parcon.TagS("COMMA", ","),
 		parcon.MultiDigits,
 	), parcon.ToString)
 
@@ -103,7 +103,7 @@ func ExampleSeparatedList() {
 }
 
 func ExampleSeparatedListLimited() {
-	parser := parcon.Map(parcon.SeparatedListLimited(
+	parser := parcon.Map[rune](parcon.SeparatedListLimited[rune, []rune, []rune](
 		0,
 		2,
 		parcon.TagS("COMMA", ","),
@@ -118,8 +118,8 @@ func ExampleSeparatedListLimited() {
 }
 
 func ExampleMany() {
-	parser := parcon.Map(
-		parcon.Many(0, parcon.TagS("ITEM", "ab_")),
+	parser := parcon.Map[rune](
+		parcon.Many[rune, []rune](0, parcon.TagS("ITEM", "ab_")),
 		parcon.ToString,
 	)
 
@@ -131,8 +131,8 @@ func ExampleMany() {
 }
 
 func ExampleManyLimited() {
-	parser := parcon.Map(
-		parcon.ManyLimited(0, 2, parcon.TagS("ITEM", "ab_")),
+	parser := parcon.Map[rune](
+		parcon.ManyLimited[rune, []rune](0, 2, parcon.TagS("ITEM", "ab_")),
 		parcon.ToString,
 	)
 
@@ -144,7 +144,7 @@ func ExampleManyLimited() {
 }
 
 func ExampleRepeat() {
-	parser := parcon.Repeat(3, parcon.SingleDigit)
+	parser := parcon.Repeat[rune, rune](3, parcon.SingleDigit)
 
 	output, remain, err := parser.Parse([]rune("12345"))
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
@@ -154,9 +154,9 @@ func ExampleRepeat() {
 }
 
 func ExampleDelimited() {
-	parser := parcon.Delimited(
+	parser := parcon.Delimited[rune, []rune, []rune, []rune](
 		parcon.TagS("OPEN_PAREN", "("),
-		parcon.Many(0, parcon.NoneOfS("NOT_PAREN", "()")),
+		parcon.Many[rune, rune](0, parcon.NoneOfS("NOT_PAREN", "()")),
 		parcon.TagS("CLOSE_PAREN", ")"),
 	)
 
@@ -168,7 +168,7 @@ func ExampleDelimited() {
 }
 
 func ExampleWithPrefix() {
-	parser := parcon.WithPrefix(
+	parser := parcon.WithPrefix[rune, []rune, []rune](
 		parcon.TagS("AT_SYMBOL", "@"),
 		parcon.MultiAlphas,
 	)
@@ -181,8 +181,8 @@ func ExampleWithPrefix() {
 }
 
 func ExampleWithSuffix() {
-	parser := parcon.WithSuffix(
-		parcon.Many(1, parcon.NoneOfS("NOT_SEMICOLON", ";")),
+	parser := parcon.WithSuffix[rune, []rune, []rune](
+		parcon.Many[rune, rune](1, parcon.NoneOfS("NOT_SEMICOLON", ";")),
 		parcon.TagS("SEMICOLON", ";"),
 	)
 
@@ -194,16 +194,16 @@ func ExampleWithSuffix() {
 }
 
 func ExampleNamed() {
-	raw := parcon.Or(
-		parcon.WithPrefix(parcon.TagS("AT_SYMBOL", "@"), parcon.MultiAlphas),
-		parcon.WithPrefix(parcon.TagS("HASH_SYMBOL", "#"), parcon.MultiAlphas),
+	raw := parcon.Or[rune, []rune](
+		parcon.WithPrefix[rune, []rune, []rune](parcon.TagS("AT_SYMBOL", "@"), parcon.MultiAlphas),
+		parcon.WithPrefix[rune, []rune, []rune](parcon.TagS("HASH_SYMBOL", "#"), parcon.MultiAlphas),
 	)
 	_, _, err := raw.Parse([]rune("hello"))
 	fmt.Println("raw:", err)
 
-	named := parcon.Or(
-		parcon.Named("MENTION", parcon.WithPrefix(parcon.TagS("AT_SYMBOL", "@"), parcon.MultiAlphas)),
-		parcon.Named("TAG", parcon.WithPrefix(parcon.TagS("HASH_SYMBOL", "#"), parcon.MultiAlphas)),
+	named := parcon.Or[rune, []rune](
+		parcon.Named[rune, []rune]("MENTION", parcon.WithPrefix[rune, []rune, []rune](parcon.TagS("AT_SYMBOL", "@"), parcon.MultiAlphas)),
+		parcon.Named[rune, []rune]("TAG", parcon.WithPrefix[rune, []rune, []rune](parcon.TagS("HASH_SYMBOL", "#"), parcon.MultiAlphas)),
 	)
 	_, _, err = named.Parse([]rune("hello"))
 	fmt.Println("named:", err)

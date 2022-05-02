@@ -8,7 +8,7 @@ import (
 )
 
 func ExampleConvert() {
-	parser := parcon.Convert(
+	parser := parcon.Convert[rune](
 		parcon.MultiDigits,
 		func(input []rune) (int, error) {
 			return strconv.Atoi(string(input))
@@ -23,8 +23,8 @@ func ExampleConvert() {
 }
 
 func ExampleMap() {
-	parser := parcon.Map(
-		parcon.SeparatedList(
+	parser := parcon.Map[rune](
+		parcon.SeparatedList[rune, []rune, []rune](
 			0,
 			parcon.MultiSpaces,
 			parcon.MultiDigits,
@@ -42,9 +42,9 @@ func ExampleMap() {
 }
 
 func ExampleMatchOnly() {
-	parser := parcon.MatchOnly(parcon.Sequence(
-		parcon.Many(1, parcon.MultiAlphas),
-		parcon.Many(0, parcon.MultiDigits),
+	parser := parcon.MatchOnly[rune, [][]rune](parcon.Sequence[rune, []rune](
+		parcon.MultiAlphas,
+		parcon.Optional[rune, []rune](parcon.MultiDigits),
 	))
 
 	output, remain, err := parser.Parse([]rune("hello123"))
@@ -63,8 +63,8 @@ func ExampleMatchOnly() {
 }
 
 func ExampleReplace() {
-	parser := parcon.Many(0, parcon.Or(
-		parcon.Replace(parcon.TagS("NEWLINE", `\n`), '\n'),
+	parser := parcon.Many[rune, rune](0, parcon.Or[rune, rune](
+		parcon.Replace[rune, []rune](parcon.TagS("NEWLINE", `\n`), '\n'),
 		parcon.Anything[rune](),
 	))
 

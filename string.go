@@ -40,25 +40,25 @@ var (
 // Pre-defined parsers for a slice of runes.
 var (
 	// A sequence of multiple SingleSpace.
-	MultiSpaces = Many(1, SingleSpace)
+	MultiSpaces = Many[rune, rune](1, SingleSpace)
 
 	// A sequence of multiple SingleNewline.
-	MultiNewline = Many(1, SingleNewline)
+	MultiNewline = Many[rune, rune](1, SingleNewline)
 
 	// A sequence of multiple SingleSpaceOrNewline.
-	MultiSpacesOrNewlines = Many(1, SingleSpaceOrNewline)
+	MultiSpacesOrNewlines = Many[rune, rune](1, SingleSpaceOrNewline)
 
 	// A sequence of multiple SingleAlpha.
-	MultiAlphas = Many(1, SingleAlpha)
+	MultiAlphas = Many[rune, rune](1, SingleAlpha)
 
 	// A sequence of multiple SingleDigit.
-	MultiDigits = Many(1, SingleDigit)
+	MultiDigits = Many[rune, rune](1, SingleDigit)
 
 	// A sequence of multiple SingleHexDigit.
-	MultiHexDigits = Many(1, SingleHexDigit)
+	MultiHexDigits = Many[rune, rune](1, SingleHexDigit)
 
 	// A sequence of SingleAlphaNum.
-	MultiAlphaNums = Many(1, SingleAlphaNum)
+	MultiAlphaNums = Many[rune, rune](1, SingleAlphaNum)
 )
 
 // ToString is a ConvertFunc to convert []rune to string.

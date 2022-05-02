@@ -13,20 +13,20 @@ func ToInterface[I any](x I) (interface{}, error) {
 var (
 	quote = pc.TagS("DOUBLE_QUOTE", `"`)
 
-	optionalSpaces = pc.Optional(pc.MultiSpacesOrNewlines)
+	optionalSpaces = pc.Optional[rune, []rune](pc.MultiSpacesOrNewlines)
 
-	str = pc.Named("STRING_LITERAL", pc.Convert(pc.Delimited(
+	str = pc.Named[rune, string]("STRING_LITERAL", pc.Convert[rune](pc.Delimited[rune, []rune, []rune, []rune](
 		quote,
-		pc.Many(0, pc.Or(
-			pc.Replace(pc.TagS("ESCAPE", `\"`), '"'),
+		pc.Many[rune, rune](0, pc.Or[rune, rune](
+			pc.Replace[rune, []rune, rune](pc.TagS("ESCAPE", `\"`), '"'),
 			pc.NoneOfS("CHARACTER", `"`),
 		)),
 		quote,
 	), pc.ToString))
 
-	number = pc.Named("NUMBER_LITERAL", pc.Convert(pc.MatchOnly(pc.Sequence(
+	number = pc.Named[rune, float64]("NUMBER_LITERAL", pc.Convert[rune](pc.MatchOnly[rune, [][]rune](pc.Sequence[rune, []rune](
 		pc.MultiDigits,
-		pc.Optional(pc.MatchOnly(pc.Sequence(
+		pc.Optional[rune, []rune](pc.MatchOnly[rune, [][]rune](pc.Sequence[rune, []rune](
 			pc.TagS("PERIOD", "."),
 			pc.MultiDigits,
 		))),
@@ -48,14 +48,14 @@ func (l List) String() string {
 }
 
 func (l List) Parse(input []rune) ([]interface{}, []rune, error) {
-	return pc.Delimited(
-		pc.Sequence(listStart, optionalSpaces),
-		pc.SeparatedList[rune, interface{}](
+	return pc.Delimited[rune, [][]rune, []interface{}, [][]rune](
+		pc.Sequence[rune, []rune](listStart, optionalSpaces),
+		pc.SeparatedList[rune, [][]rune, interface{}](
 			0,
-			pc.Sequence(optionalSpaces, listSeparator, optionalSpaces),
+			pc.Sequence[rune, []rune](optionalSpaces, listSeparator, optionalSpaces),
 			JsonValue{},
 		),
-		pc.Sequence(optionalSpaces, listEnd),
+		pc.Sequence[rune, []rune](optionalSpaces, listEnd),
 	).Parse(input)
 }
 
@@ -67,21 +67,21 @@ func (o Object) String() string {
 
 func (o Object) Parse(input []rune) (map[string]interface{}, []rune, error) {
 	keyValue := pc.Pair[rune, string, interface{}](
-		pc.WithSuffix(
+		pc.WithSuffix[rune, string, [][]rune](
 			str,
-			pc.Sequence(optionalSpaces, objectSeparator, optionalSpaces),
+			pc.Sequence[rune, []rune](optionalSpaces, objectSeparator, optionalSpaces),
 		),
 		JsonValue{},
 	)
 
-	xs, remain, err := pc.Delimited(
-		pc.Sequence(objectStart, optionalSpaces),
-		pc.SeparatedList(
+	xs, remain, err := pc.Delimited[rune, [][]rune, []pc.PairValue[string, interface{}], [][]rune](
+		pc.Sequence[rune, []rune](objectStart, optionalSpaces),
+		pc.SeparatedList[rune, [][]rune, pc.PairValue[string, interface{}]](
 			0,
-			pc.Sequence(optionalSpaces, listSeparator, optionalSpaces),
+			pc.Sequence[rune, []rune](optionalSpaces, listSeparator, optionalSpaces),
 			keyValue,
 		),
-		pc.Sequence(optionalSpaces, objectEnd),
+		pc.Sequence[rune, []rune](optionalSpaces, objectEnd),
 	).Parse(input)
 	if err != nil {
 		return nil, nil, err
@@ -101,13 +101,13 @@ func (j JsonValue) String() string {
 }
 
 func (j JsonValue) Parse(input []rune) (interface{}, []rune, error) {
-	return pc.Delimited(
+	return pc.Delimited[rune, []rune, interface{}, []rune](
 		optionalSpaces,
-		pc.Or(
-			pc.Convert(str, ToInterface[string]),
-			pc.Convert(number, ToInterface[float64]),
-			pc.Convert[rune, []interface{}](List{}, ToInterface[[]interface{}]),
-			pc.Convert[rune, map[string]interface{}](Object{}, ToInterface[map[string]interface{}]),
+		pc.Or[rune, interface{}](
+			pc.Convert[rune](str, ToInterface[string]),
+			pc.Convert[rune](number, ToInterface[float64]),
+			pc.Convert[rune](List{}, ToInterface[[]interface{}]),
+			pc.Convert[rune](Object{}, ToInterface[map[string]interface{}]),
 		),
 		optionalSpaces,
 	).Parse(input)

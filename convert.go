@@ -7,53 +7,55 @@ import (
 // ConvertFunc is a function type to convert parsed value.
 //
 // Normally, it is used for Convert or Map parser.
-type ConvertFunc[I any, O any] func(input I) (output O, err error)
+type ConvertFunc[I any, O any] interface {
+	func(input I) (output O, err error)
+}
 
-type converter[I comparable, O1, O2 any] struct {
-	Parser Parser[I, O1]
-	Func   ConvertFunc[O1, O2]
+type Converter[I comparable, O1, O2 any, P Parser[I, O1], F ConvertFunc[O1, O2]] struct {
+	parser P
+	fun    F
 }
 
 // Convert converts the output of the given `parser` using given ConvertFunc.
-func Convert[I comparable, O1, O2 any](parser Parser[I, O1], fn ConvertFunc[O1, O2]) Parser[I, O2] {
-	return converter[I, O1, O2]{parser, fn}
+func Convert[I comparable, O1, O2 any, P Parser[I, O1], F ConvertFunc[O1, O2]](parser P, fun F) Converter[I, O1, O2, P, F] {
+	return Converter[I, O1, O2, P, F]{parser, fun}
 }
 
-func (c converter[I, O1, O2]) Parse(input []I) (output O2, remain []I, err error) {
+func (c Converter[I, O1, O2, P, F]) Parse(input []I) (output O2, remain []I, err error) {
 	var o O1
-	o, remain, err = c.Parser.Parse(input)
+	o, remain, err = c.parser.Parse(input)
 	if err != nil {
 		return
 	}
 
-	output, err = c.Func(o)
+	output, err = c.fun(o)
 	return
 }
 
-func (c converter[I, O1, O2]) String() string {
-	return fmt.Sprint(c.Parser)
+func (c Converter[I, O1, O2, P, F]) String() string {
+	return fmt.Sprint(c.parser)
 }
 
-type mapper[I comparable, O1, O2 any] struct {
-	Parser Parser[I, []O1]
-	Func   ConvertFunc[O1, O2]
+type Mapper[I comparable, O1, O2 any, P Parser[I, []O1], F ConvertFunc[O1, O2]] struct {
+	parser P
+	fun    F
 }
 
 // Map converts the all of outputs of the given `parser` using given ConvertFunc.
-func Map[I comparable, O1, O2 any](parser Parser[I, []O1], fn ConvertFunc[O1, O2]) Parser[I, []O2] {
-	return mapper[I, O1, O2]{parser, fn}
+func Map[I comparable, O1, O2 any, P Parser[I, []O1], F ConvertFunc[O1, O2]](parser P, fun F) Mapper[I, O1, O2, P, F] {
+	return Mapper[I, O1, O2, P, F]{parser, fun}
 }
 
-func (m mapper[I, O1, O2]) Parse(input []I) (output []O2, remain []I, err error) {
+func (m Mapper[I, O1, O2, P, F]) Parse(input []I) (output []O2, remain []I, err error) {
 	var o1s []O1
-	o1s, remain, err = m.Parser.Parse(input)
+	o1s, remain, err = m.parser.Parse(input)
 	if err != nil {
 		return
 	}
 
 	for _, o1 := range o1s {
 		var o2 O2
-		o2, err = m.Func(o1)
+		o2, err = m.fun(o1)
 		if err != nil {
 			return
 		}
@@ -63,21 +65,21 @@ func (m mapper[I, O1, O2]) Parse(input []I) (output []O2, remain []I, err error)
 	return
 }
 
-func (m mapper[I, O1, O2]) String() string {
-	return fmt.Sprint(m.Parser)
+func (m Mapper[I, O1, O2, P, F]) String() string {
+	return fmt.Sprint(m.parser)
 }
 
-type matchOnly[I comparable, O any] struct {
-	Parser Parser[I, O]
+type MatchOnlyParser[I comparable, O any, P Parser[I, O]] struct {
+	parser P
 }
 
 // MatchOnly parses the input with the given `parser`, but returns a range of input string that parsed as is.
-func MatchOnly[I comparable, O any](parser Parser[I, O]) Parser[I, []I] {
-	return matchOnly[I, O]{parser}
+func MatchOnly[I comparable, O any, P Parser[I, O]](parser P) MatchOnlyParser[I, O, P] {
+	return MatchOnlyParser[I, O, P]{parser}
 }
 
-func (m matchOnly[I, O]) Parse(input []I) (output []I, remain []I, err error) {
-	_, remain, err = m.Parser.Parse(input)
+func (m MatchOnlyParser[I, O, P]) Parse(input []I) (output []I, remain []I, err error) {
+	_, remain, err = m.parser.Parse(input)
 	if err != nil {
 		return
 	}
@@ -85,28 +87,28 @@ func (m matchOnly[I, O]) Parse(input []I) (output []I, remain []I, err error) {
 	return input[:l], remain, nil
 }
 
-func (m matchOnly[I, O]) String() string {
-	return fmt.Sprint(m.Parser)
+func (m MatchOnlyParser[I, O, P]) String() string {
+	return fmt.Sprint(m.parser)
 }
 
-type replace[I comparable, O1, O2 any] struct {
-	Parser Parser[I, O1]
-	Value  O2
+type Replacer[I comparable, O1, O2 any, P Parser[I, O1]] struct {
+	parser P
+	value  O2
 }
 
 // Replace replaces result value with a fixed value.
-func Replace[I comparable, O1, O2 any](parser Parser[I, O1], value O2) Parser[I, O2] {
-	return replace[I, O1, O2]{parser, value}
+func Replace[I comparable, O1, O2 any, P Parser[I, O1]](parser P, value O2) Replacer[I, O1, O2, P] {
+	return Replacer[I, O1, O2, P]{parser, value}
 }
 
-func (r replace[I, O1, O2]) String() string {
-	return fmt.Sprint(r.Parser)
+func (r Replacer[I, O1, O2, P]) String() string {
+	return fmt.Sprint(r.parser)
 }
 
-func (r replace[I, O1, O2]) Parse(input []I) (output O2, remain []I, err error) {
-	_, remain, err = r.Parser.Parse(input)
+func (r Replacer[I, O1, O2, P]) Parse(input []I) (output O2, remain []I, err error) {
+	_, remain, err = r.parser.Parse(input)
 	if err != nil {
 		return
 	}
-	return r.Value, remain, nil
+	return r.value, remain, nil
 }
