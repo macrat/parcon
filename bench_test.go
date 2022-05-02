@@ -1,14 +1,50 @@
 package parcon_test
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 	"testing"
 
 	pc "github.com/macrat/parcon"
 )
 
-func BenchmarkSimpleList(b *testing.B) {
+func generateSimpleList() ([]rune, int) {
+	xs := make([]string, 1000)
+	for i := range xs {
+		xs[i] = fmt.Sprint(i)
+	}
+	return []rune(strings.Join(xs, ",")), len(xs)
+}
+
+func Benchmark_simpleListWithoutParcon(b *testing.B) {
+	parser := func(input []rune) [][]rune {
+		result := make([][]rune, 0, 1000)
+		var buf []rune
+		for _, x := range input {
+			if x == ',' {
+				result = append(result, buf)
+			} else {
+				buf = append(buf, x)
+			}
+		}
+		return append(result, buf)
+	}
+
+	input, l := generateSimpleList()
+	b.SetBytes(int64(len(input)))
+
+	output := parser(input)
+	if len(output) != l {
+		b.Fatalf("found unexpected length of array: expected %d but got %d", l, len(output))
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		parser(input)
+	}
+}
+
+func Benchmark_simpleList(b *testing.B) {
 	parser := pc.SeparatedListLimited(
 		0,
 		1000,
@@ -16,18 +52,15 @@ func BenchmarkSimpleList(b *testing.B) {
 		pc.ManyLimited(1, 5, pc.NoneOfS("NOT_COMMA", ",")),
 	)
 
-	xs := make([]string, 1000)
-	for i := range xs {
-		xs[i] = fmt.Sprint(i)
-	}
-	input := []rune(strings.Join(xs, ","))
+	input, l := generateSimpleList()
+	b.SetBytes(int64(len(input)))
 
 	output, _, err := parser.Parse(input)
 	if err != nil {
 		b.Fatalf("failed to parse: %s", err)
 	}
-	if len(output) != len(xs) {
-		b.Fatalf("found unexpected length of array: expected %d but got %d", len(xs), len(output))
+	if len(output) != l {
+		b.Fatalf("found unexpected length of array: expected %d but got %d", l, len(output))
 	}
 
 	b.ResetTimer()
@@ -36,7 +69,7 @@ func BenchmarkSimpleList(b *testing.B) {
 	}
 }
 
-func BenchmarkJsonParser(b *testing.B) {
+func Benchmark_jsonParser(b *testing.B) {
 	parser := JsonValue{}
 
 	xs := make([]string, 100)
@@ -48,6 +81,7 @@ func BenchmarkJsonParser(b *testing.B) {
 		xs[i] = fmt.Sprintf(`"%d": [%s]`, i, strings.Join(ys, ", "))
 	}
 	input := []rune(fmt.Sprintf(`{%s}`, strings.Join(xs, ", ")))
+	b.SetBytes(int64(len(input)))
 
 	_, _, err := parser.Parse(input)
 	if err != nil {
