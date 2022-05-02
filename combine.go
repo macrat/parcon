@@ -115,7 +115,7 @@ func (p pairParser[I, O1, O2]) Parse(input []I) (output PairValue[O1, O2], remai
 	return
 }
 
-type separatedListParser[I comparable, O, D any] struct {
+type listParser[I comparable, O, D any] struct {
 	Min       uint
 	Max       uint
 	Delimiter Parser[I, D]
@@ -128,7 +128,7 @@ type separatedListParser[I comparable, O, D any] struct {
 // The output slice have at least `min` number of elements, or returns error.
 // If you want to specify maximum number of elements, please use SeparatedListLimited.
 func SeparatedList[I comparable, O, D any](min uint, delimiter Parser[I, D], parser Parser[I, O]) Parser[I, []O] {
-	return separatedListParser[I, O, D]{min, 0, delimiter, parser}
+	return listParser[I, O, D]{min, 0, delimiter, parser}
 }
 
 // SeparatedListLimited parses an array that separated by `delimiter` using the given `parser`.
@@ -141,7 +141,7 @@ func SeparatedListLimited[I comparable, O, D any](min, max uint, delimiter Parse
 			return []O{o}, nil
 		})
 	} else {
-		return separatedListParser[I, O, D]{min, max, delimiter, parser}
+		return listParser[I, O, D]{min, max, delimiter, parser}
 	}
 }
 
@@ -172,18 +172,18 @@ func Repeat[I comparable, O any](num uint, parser Parser[I, O]) Parser[I, []O] {
 	return ManyLimited(num, num, parser)
 }
 
-func (s separatedListParser[I, O, D]) Parse(input []I) (output []O, remain []I, err error) {
+func (l listParser[I, O, D]) Parse(input []I) (output []O, remain []I, err error) {
 	remain = input
 
-	if s.Max != 0 {
-		output = make([]O, 0, s.Max)
+	if l.Max != 0 {
+		output = make([]O, 0, l.Max)
 	}
 
 	var count uint
 	for {
 		var o O
 		var r []I
-		o, r, err = s.Parser.Parse(remain)
+		o, r, err = l.Parser.Parse(remain)
 		if err != nil {
 			break
 		}
@@ -192,30 +192,30 @@ func (s separatedListParser[I, O, D]) Parse(input []I) (output []O, remain []I, 
 		output = append(output, o)
 		count++
 
-		if s.Max != 0 && count >= s.Max {
+		if l.Max != 0 && count >= l.Max {
 			break
 		}
 
-		_, r, err = s.Delimiter.Parse(remain)
+		_, r, err = l.Delimiter.Parse(remain)
 		if err != nil {
 			break
 		}
 		remain = r
 	}
 
-	if s.Min <= count {
+	if l.Min <= count {
 		err = nil
 	}
 
 	return
 }
 
-func (s separatedListParser[I, O, D]) String() string {
-	switch any(s.Delimiter).(type) {
+func (l listParser[I, O, D]) String() string {
+	switch any(l.Delimiter).(type) {
 	case nothing[I]:
-		return fmt.Sprintf("multiple [%v]", s.Parser)
+		return fmt.Sprintf("multiple [%v]", l.Parser)
 	default:
-		return fmt.Sprintf("multiple [%v] separated by [%v]", s.Parser, s.Delimiter)
+		return fmt.Sprintf("multiple [%v] separated by [%v]", l.Parser, l.Delimiter)
 	}
 }
 
