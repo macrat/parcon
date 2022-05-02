@@ -45,11 +45,11 @@ func Benchmark_simpleListWithoutParcon(b *testing.B) {
 }
 
 func Benchmark_simpleList(b *testing.B) {
-	parser := pc.SeparatedListLimited[rune, []rune, []rune](
+	parser := pc.SeparatedListLimited(
 		0,
 		1000,
 		pc.TagS("COMMA", ","),
-		pc.ManyLimited[rune, rune](1, 5, pc.NoneOfS("NOT_COMMA", ",")),
+		pc.ManyLimited(1, 5, pc.NoneOfS("NOT_COMMA", ",")),
 	)
 
 	input, l := generateSimpleList()

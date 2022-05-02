@@ -13,18 +13,18 @@ type Color struct {
 	Blue  uint8
 }
 
-var HexNumber = pc.Convert[rune, []rune](
-	pc.Repeat[rune, rune](2, pc.SingleHexDigit),
+var HexNumber = pc.Convert(
+	pc.Repeat(2, pc.SingleHexDigit),
 	func(input []rune) (uint8, error) {
 		i, err := strconv.ParseUint(string(input), 16, 8)
 		return uint8(i), err
 	},
 )
 
-var ColorParser = pc.Convert[rune, []uint8, Color](
-	pc.WithPrefix[rune, []rune, []uint8](
+var ColorParser = pc.Convert(
+	pc.WithPrefix(
 		pc.TagS("HASH", "#"),
-		pc.Repeat[rune, uint8](3, HexNumber),
+		pc.Repeat(3, HexNumber),
 	),
 	func(input []uint8) (Color, error) {
 		return Color{

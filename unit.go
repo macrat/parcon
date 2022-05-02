@@ -10,43 +10,43 @@ func contains[T comparable](slice []T, item T) bool {
 	return false
 }
 
-type TagParser[T comparable] struct {
-	name string
-	tag  []T
+type tagParser[T comparable] struct {
+	Name string
+	Tag  []T
 }
 
 // Tag parses fixed string or array, like keywords.
 //
 // The `name` in argument is used as human readable name in error messages.
-func Tag[T comparable](name string, tag []T) TagParser[T] {
-	return TagParser[T]{name, tag}
+func Tag[T comparable](name string, tag []T) Parser[T, []T] {
+	return tagParser[T]{name, tag}
 }
 
 // TagS is a shorthand for Tag using string as argument.
-func TagS(name string, tag string) TagParser[rune] {
+func TagS(name string, tag string) Parser[rune, []rune] {
 	return Tag(name, []rune(tag))
 }
 
-func (t TagParser[T]) Parse(input []T) (output []T, remain []T, err error) {
-	if len(t.tag) > len(input) {
-		return nil, nil, ErrUnexpectedInput[T]{t.name, input}
+func (t tagParser[T]) Parse(input []T) (output []T, remain []T, err error) {
+	if len(t.Tag) > len(input) {
+		return nil, nil, ErrUnexpectedInput[T]{t.Name, input}
 	}
-	for i := range t.tag {
-		if t.tag[i] != input[i] {
-			return nil, nil, ErrUnexpectedInput[T]{t.name, input}
+	for i := range t.Tag {
+		if t.Tag[i] != input[i] {
+			return nil, nil, ErrUnexpectedInput[T]{t.Name, input}
 		}
 	}
 
-	return t.tag, input[len(t.tag):], nil
+	return t.Tag, input[len(t.Tag):], nil
 }
 
-func (t TagParser[T]) String() string {
-	return t.name
+func (t tagParser[T]) String() string {
+	return t.Name
 }
 
-type OneOfParser[T comparable] struct {
-	name string
-	list []T
+type oneOfParser[T comparable] struct {
+	Name string
+	List []T
 }
 
 // OneOf parses a single value that listed in the `list`.
@@ -54,66 +54,66 @@ type OneOfParser[T comparable] struct {
 // If you want to parse two or more values, please use Many parser.
 //
 // The `name` in argument is used as human readable name in error messages.
-func OneOf[T comparable](name string, list []T) OneOfParser[T] {
-	return OneOfParser[T]{name, list}
+func OneOf[T comparable](name string, list []T) Parser[T, T] {
+	return oneOfParser[T]{name, list}
 }
 
 // OneOfS is a shorthand for OneOf using a string as `list`.
-func OneOfS(name string, list string) OneOfParser[rune] {
+func OneOfS(name string, list string) Parser[rune, rune] {
 	return OneOf(name, []rune(list))
 }
 
-func (o OneOfParser[T]) Parse(input []T) (output T, remain []T, err error) {
-	if len(input) > 0 && contains(o.list, input[0]) {
+func (o oneOfParser[T]) Parse(input []T) (output T, remain []T, err error) {
+	if len(input) > 0 && contains(o.List, input[0]) {
 		return input[0], input[1:], nil
 	} else {
-		err = ErrUnexpectedInput[T]{o.name, input}
+		err = ErrUnexpectedInput[T]{o.Name, input}
 		return
 	}
 }
 
-func (o OneOfParser[T]) String() string {
-	return o.name
+func (o oneOfParser[T]) String() string {
+	return o.Name
 }
 
-type NoneOfParser[T comparable] struct {
-	name string
-	list []T
+type noneOfParser[T comparable] struct {
+	Name string
+	List []T
 }
 
 // NoneOf is almost the same as OneOf, but parses a single value that NOT listed in the `list`.
 //
 // The `name` in argument is used as human readable name in error messages.
-func NoneOf[T comparable](name string, list []T) NoneOfParser[T] {
-	return NoneOfParser[T]{name, list}
+func NoneOf[T comparable](name string, list []T) Parser[T, T] {
+	return noneOfParser[T]{name, list}
 }
 
 // NoneOfS is a shorthand for NoneOf using a string as `list`.
-func NoneOfS(name string, list string) NoneOfParser[rune] {
+func NoneOfS(name string, list string) Parser[rune, rune] {
 	return NoneOf(name, []rune(list))
 }
 
-func (n NoneOfParser[T]) Parse(input []T) (output T, remain []T, err error) {
-	if len(input) > 0 && !contains(n.list, input[0]) {
+func (n noneOfParser[T]) Parse(input []T) (output T, remain []T, err error) {
+	if len(input) > 0 && !contains(n.List, input[0]) {
 		return input[0], input[1:], nil
 	} else {
-		err = ErrUnexpectedInput[T]{n.name, input}
+		err = ErrUnexpectedInput[T]{n.Name, input}
 		return
 	}
 }
 
-func (n NoneOfParser[T]) String() string {
-	return n.name
+func (n noneOfParser[T]) String() string {
+	return n.Name
 }
 
-type AnythingParser[T comparable] struct{}
+type anything[T comparable] struct{}
 
 // Anything parses any single value.
-func Anything[T comparable]() AnythingParser[T] {
-	return AnythingParser[T]{}
+func Anything[T comparable]() Parser[T, T] {
+	return anything[T]{}
 }
 
-func (a AnythingParser[T]) Parse(input []T) (output T, remain []T, err error) {
+func (a anything[T]) Parse(input []T) (output T, remain []T, err error) {
 	if len(input) == 0 {
 		err = ErrUnexpectedInput[T]{"ANYTHING", input}
 		return
@@ -121,51 +121,51 @@ func (a AnythingParser[T]) Parse(input []T) (output T, remain []T, err error) {
 	return input[0], input[1:], nil
 }
 
-func (a AnythingParser[T]) String() string {
+func (a anything[T]) String() string {
 	return "ANYTHING"
 }
 
-type NothingParser[I comparable] struct{}
+type nothing[I comparable] struct{}
 
 // Nothing parses nothing, just leave all of inputs as `remain` and returns `interface{}` as an output.
-func Nothing[I comparable]() NothingParser[I] {
-	return NothingParser[I]{}
+func Nothing[I comparable]() Parser[I, struct{}] {
+	return nothing[I]{}
 }
 
-func (n NothingParser[I]) Parse(input []I) (output struct{}, remain []I, err error) {
+func (n nothing[I]) Parse(input []I) (output struct{}, remain []I, err error) {
 	return struct{}{}, input, nil
 }
 
-func (n NothingParser[I]) String() string {
+func (n nothing[I]) String() string {
 	return "NOTHING"
 }
 
-type TakeSingleParser[I comparable] struct {
-	name string
-	fun  func(I) bool
+type takeSingleParser[I comparable] struct {
+	Name string
+	Func func(I) bool
 }
 
 // TakeSingle parses input using the given function.
 // The parse will be succeed if the function returns true, otherwise failure with error.
-func TakeSingle[I comparable](name string, fun func(I) bool) TakeSingleParser[I] {
-	return TakeSingleParser[I]{name, fun}
+func TakeSingle[I comparable](name string, fn func(I) bool) Parser[I, I] {
+	return takeSingleParser[I]{name, fn}
 }
 
 // TakeWhile parses a sequence until the given function returns false.
 // This parser expects at least one element that parseable.
-func TakeWhile[I comparable](name string, fun func(I) bool) ListParser[I, struct{}, I, NothingParser[I], TakeSingleParser[I]] {
-	return Many[I, I](1, TakeSingle(name, fun))
+func TakeWhile[I comparable](name string, fn func(I) bool) Parser[I, []I] {
+	return Many(1, TakeSingle(name, fn))
 }
 
-func (t TakeSingleParser[I]) Parse(input []I) (output I, remain []I, err error) {
-	if len(input) > 0 && t.fun(input[0]) {
+func (t takeSingleParser[I]) Parse(input []I) (output I, remain []I, err error) {
+	if len(input) > 0 && t.Func(input[0]) {
 		return input[0], input[1:], nil
 	} else {
-		err = ErrUnexpectedInput[I]{t.name, input}
+		err = ErrUnexpectedInput[I]{t.Name, input}
 		return
 	}
 }
 
-func (t TakeSingleParser[I]) String() string {
-	return t.name
+func (t takeSingleParser[I]) String() string {
+	return t.Name
 }

@@ -9,11 +9,11 @@ type Parser[I comparable, O any] interface {
 	Parse(input []I) (output O, remain []I, err error)
 }
 
-// ParserFunc is a function to parse input.
+// ParseFunc is a function to parse input.
 // This type implements Parser interface.
-type ParserFunc[I comparable, O any] func(input []I) (output O, remain []I, err error)
+type ParseFunc[I comparable, O any] func(input []I) (output O, remain []I, err error)
 
 // Parse parses input.
-func (p ParserFunc[I, O]) Parse(input []I) (output O, remain []I, err error) {
+func (p ParseFunc[I, O]) Parse(input []I) (output O, remain []I, err error) {
 	return p(input)
 }
