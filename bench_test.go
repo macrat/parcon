@@ -69,7 +69,7 @@ func Benchmark_simpleList(b *testing.B) {
 }
 
 func Benchmark_jsonParser(b *testing.B) {
-	parser := JsonValue{}
+	parser := jsonValue
 
 	xs := make([]string, 100)
 	for i := range xs {

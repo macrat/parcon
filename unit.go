@@ -10,47 +10,54 @@ func contains[T comparable](slice []T, item T) bool {
 	return false
 }
 
-type tagParser[T comparable] struct {
-	Name string
-	Tag  []T
+type tagParser[I comparable, O any] struct {
+	Name  string
+	Tag   []I
+	Value O
+}
+
+// TagAs parses fixed string or array, and returns specified value.
+// It is similar to Tag with Replace, but faster and simpler than that.
+func TagAs[I comparable, O any](name string, tag []I, value O) Parser[I, O] {
+	return tagParser[I, O]{name, tag, value}
 }
 
 // Tag parses fixed string or array, like keywords.
 //
 // The `name` in argument is used as human readable name in error messages.
-func Tag[T comparable](name string, tag []T) Parser[T, []T] {
-	return tagParser[T]{name, tag}
+func Tag[I comparable](name string, tag []I) Parser[I, []I] {
+	return TagAs(name, tag, tag)
 }
 
 // TagStr is similar to Tag parser but it handles string.
-//
-// This parser is slightly slower than Tag because it converts []rune to string.
 func TagStr(name string, tag string) Parser[rune, string] {
-	return Convert(Tag(name, []rune(tag)), ToString)
+	return TagAs(name, []rune(tag), tag)
 }
 
-func (t tagParser[T]) Parse(input []T, verbose bool) (output []T, remain []T, err error) {
+func (t tagParser[I, O]) Parse(input []I, verbose bool) (output O, remain []I, err error) {
 	if len(t.Tag) > len(input) {
 		if verbose {
-			return nil, nil, ErrInvalidInputVerbose[T]{Expected: t.Name, Input: input}
+			err = ErrInvalidInputVerbose[I]{Expected: t.Name, Input: input}
 		} else {
-			return nil, nil, ErrInvalidInput
+			err = ErrInvalidInput
 		}
+		return
 	}
 	for i := range t.Tag {
 		if t.Tag[i] != input[i] {
 			if verbose {
-				return nil, nil, ErrInvalidInputVerbose[T]{Expected: t.Name, Input: input}
+				err = ErrInvalidInputVerbose[I]{Expected: t.Name, Input: input}
 			} else {
-				return nil, nil, ErrInvalidInput
+				err = ErrInvalidInput
 			}
+			return
 		}
 	}
 
-	return t.Tag, input[len(t.Tag):], nil
+	return t.Value, input[len(t.Tag):], nil
 }
 
-func (t tagParser[T]) String() string {
+func (t tagParser[I, O]) String() string {
 	return t.Name
 }
 

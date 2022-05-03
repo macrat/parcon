@@ -20,14 +20,19 @@ var (
 	str = pc.Named("STRING_LITERAL", pc.Convert(pc.Delimited(
 		quote,
 		pc.Many(0, pc.Or(
-			pc.Replace(pc.Tag("QUOTATION_MARK", []rune(`\"`)), '"'),
-			pc.Replace(pc.Tag("REVERSE_SOLIDUS", []rune(`\\`)), '\\'),
-			pc.Replace(pc.Tag("SOLIDUS", []rune(`\/`)), '/'),
-			pc.Replace(pc.Tag("BACKSPACE", []rune(`\b`)), '\b'),
-			pc.Replace(pc.Tag("FORM_FEED", []rune(`\f`)), '\f'),
-			pc.Replace(pc.Tag("LINE_FEED", []rune(`\n`)), '\n'),
-			pc.Replace(pc.Tag("CARRIAGE_RETURN", []rune(`\r`)), '\r'),
-			pc.Replace(pc.Tag("TAB", []rune(`\t`)), '\t'),
+			pc.WithPrefix(
+				pc.Tag("ESCAPE", []rune{'\\'}),
+				pc.Or(
+					pc.TagAs("QUOTATION_MARK", []rune(`"`), '"'),
+					pc.TagAs("REVERSE_SOLIDUS", []rune(`\`), '\\'),
+					pc.TagAs("SOLIDUS", []rune(`/`), '/'),
+					pc.TagAs("BACKSPACE", []rune(`b`), '\b'),
+					pc.TagAs("FORM_FEED", []rune(`f`), '\f'),
+					pc.TagAs("LINE_FEED", []rune(`n`), '\n'),
+					pc.TagAs("CARRIAGE_RETURN", []rune(`r`), '\r'),
+					pc.TagAs("TAB", []rune(`t`), '\t'),
+				),
+			),
 			pc.Convert(
 				pc.Repeat(2, pc.WithPrefix(
 					pc.Tag("UNICODE", []rune(`\u`)),
@@ -87,24 +92,42 @@ var (
 		))),
 	)), pc.ToFloat))
 
-	null = pc.Named("NULL", pc.Replace(
-		pc.Tag("NULL", []rune("null")),
-		(interface{})(nil),
-	))
+	null = pc.TagAs("NULL", []rune("null"), (interface{})(nil))
 
 	boolean = pc.Or(
-		pc.Replace(pc.Tag("TRUE", []rune("true")), true),
-		pc.Replace(pc.Tag("FALSE", []rune("false")), false),
+		pc.TagAs("TRUE", []rune("true"), true),
+		pc.TagAs("FALSE", []rune("false"), false),
 	)
 
-	beginArray = pc.Tag("BEGIN_ARRAY", []rune("["))
-	endArray   = pc.Tag("END_ARRAY", []rune("]"))
+	beginArray = pc.WithSuffix(pc.Tag("BEGIN_ARRAY", []rune("[")), optionalSpaces)
+	endArray   = pc.WithPrefix(optionalSpaces, pc.Tag("END_ARRAY", []rune("]")))
 
-	beginObject = pc.Tag("BEGIN_OBJECT", []rune("{"))
-	endObject   = pc.Tag("END_OBJECT", []rune("}"))
+	beginObject = pc.WithSuffix(pc.Tag("BEGIN_OBJECT", []rune("{")), optionalSpaces)
+	endObject   = pc.WithPrefix(optionalSpaces, pc.Tag("END_OBJECT", []rune("}")))
 
-	nameSeparator  = pc.Tag("NAME_SEPARATOR", []rune(":"))
-	valueSeparator = pc.Tag("VALUE_SEPARATOR", []rune(","))
+	nameSeparator  = pc.Delimited(optionalSpaces, pc.Tag("NAME_SEPARATOR", []rune(":")), optionalSpaces)
+	valueSeparator = pc.Delimited(optionalSpaces, pc.Tag("VALUE_SEPARATOR", []rune(",")), optionalSpaces)
+
+	keyValuePair = pc.Pair(
+		pc.WithSuffix(
+			str,
+			nameSeparator,
+		),
+		jsonValue,
+	)
+
+	jsonValue = pc.Named("JSON_VALUE", pc.Delimited(
+		optionalSpaces,
+		pc.Or(
+			null,
+			pc.Convert(str, ToInterface[string]),
+			pc.Convert(number, ToInterface[float64]),
+			pc.Convert(boolean, ToInterface[bool]),
+			pc.Convert[rune, []interface{}](Array{}, ToInterface[[]interface{}]),
+			pc.Convert[rune, map[string]interface{}](Object{}, ToInterface[map[string]interface{}]),
+		),
+		optionalSpaces,
+	))
 )
 
 type Array struct{}
@@ -115,13 +138,9 @@ func (a Array) String() string {
 
 func (a Array) Parse(input []rune, verbose bool) ([]interface{}, []rune, error) {
 	return pc.Delimited(
-		pc.Sequence(beginArray, optionalSpaces),
-		pc.SeparatedList[rune, interface{}](
-			0,
-			pc.Sequence(optionalSpaces, valueSeparator, optionalSpaces),
-			JsonValue{},
-		),
-		pc.Sequence(optionalSpaces, endArray),
+		beginArray,
+		pc.SeparatedList(0, valueSeparator, jsonValue),
+		endArray,
 	).Parse(input, verbose)
 }
 
@@ -132,22 +151,10 @@ func (o Object) String() string {
 }
 
 func (o Object) Parse(input []rune, verbose bool) (map[string]interface{}, []rune, error) {
-	keyValue := pc.Pair[rune, string, interface{}](
-		pc.WithSuffix(
-			str,
-			pc.Sequence(optionalSpaces, nameSeparator, optionalSpaces),
-		),
-		JsonValue{},
-	)
-
 	xs, remain, err := pc.Delimited(
-		pc.Sequence(beginObject, optionalSpaces),
-		pc.SeparatedList(
-			0,
-			pc.Sequence(optionalSpaces, valueSeparator, optionalSpaces),
-			keyValue,
-		),
-		pc.Sequence(optionalSpaces, endObject),
+		beginObject,
+		pc.SeparatedList(0, valueSeparator, keyValuePair),
+		endObject,
 	).Parse(input, verbose)
 	if err != nil {
 		return nil, nil, err
@@ -160,30 +167,9 @@ func (o Object) Parse(input []rune, verbose bool) (map[string]interface{}, []run
 	return result, remain, nil
 }
 
-type JsonValue struct{}
-
-func (j JsonValue) String() string {
-	return "JSON_VALUE"
-}
-
-func (j JsonValue) Parse(input []rune, verbose bool) (interface{}, []rune, error) {
-	return pc.Delimited(
-		optionalSpaces,
-		pc.Or(
-			null,
-			pc.Convert(str, ToInterface[string]),
-			pc.Convert(number, ToInterface[float64]),
-			pc.Convert(boolean, ToInterface[bool]),
-			pc.Convert[rune, []interface{}](Array{}, ToInterface[[]interface{}]),
-			pc.Convert[rune, map[string]interface{}](Object{}, ToInterface[map[string]interface{}]),
-		),
-		optionalSpaces,
-	).Parse(input, verbose)
-}
-
 // Parse JSON that defined in RFC8259
 func ParseJson(s string) (interface{}, error) {
-	output, remain, err := JsonValue{}.Parse([]rune(s), true)
+	output, remain, err := jsonValue.Parse([]rune(s), true)
 	if err != nil {
 		return nil, err
 	}
