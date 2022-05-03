@@ -62,33 +62,31 @@ func (p pairParser[I, O1, O2]) String() string {
 	return fmt.Sprintf("[%v, %v]", p.First, p.Second)
 }
 
-type delimitedParser[I comparable, P, O, S any] struct {
+type enclosuredParser[I comparable, P, O, S any] struct {
 	Prefix Parser[I, P]
 	Body   Parser[I, O]
 	Suffix Parser[I, S]
 }
 
-// Delimited parses a value that have a prefix and a suffix.
+// WithEnclosure parses a value that have a prefix and a suffix.
 // For example, you can use this parser for quoted string.
-func Delimited[I comparable, P, O, S any](prefix Parser[I, P], body Parser[I, O], suffix Parser[I, S]) Parser[I, O] {
-	return delimitedParser[I, P, O, S]{prefix, body, suffix}
+func WithEnclosure[I comparable, P, O, S any](prefix Parser[I, P], body Parser[I, O], suffix Parser[I, S]) Parser[I, O] {
+	return enclosuredParser[I, P, O, S]{prefix, body, suffix}
 }
 
 // WithPrefix parses a value that have a prefix.
 // For example, you can use this parser to parse a GitHub or Twitter style mention that have '@' prefix.
-//
-// This is a shorthand for Delimited that uses Nothing as the suffix.
 func WithPrefix[I comparable, P, O any](prefix Parser[I, P], body Parser[I, O]) Parser[I, O] {
-	return delimitedParser[I, P, O, struct{}]{prefix, body, Nothing[I]()}
+	return enclosuredParser[I, P, O, struct{}]{prefix, body, Nothing[I]()}
 }
 
 // WithSuffix parses a value that have a suffix.
 // For example, you can use this parser to parse a single line of C language that have semi-colon as a prefix at the end of lines.
 func WithSuffix[I comparable, O, S any](body Parser[I, O], suffix Parser[I, S]) Parser[I, O] {
-	return delimitedParser[I, struct{}, O, S]{Nothing[I](), body, suffix}
+	return enclosuredParser[I, struct{}, O, S]{Nothing[I](), body, suffix}
 }
 
-func (d delimitedParser[I, P, O, S]) Parse(input []I, verbose bool) (output O, remain []I, err error) {
+func (d enclosuredParser[I, P, O, S]) Parse(input []I, verbose bool) (output O, remain []I, err error) {
 	_, remain, err = d.Prefix.Parse(input, verbose)
 	if err != nil {
 		return
@@ -103,6 +101,6 @@ func (d delimitedParser[I, P, O, S]) Parse(input []I, verbose bool) (output O, r
 	return
 }
 
-func (d delimitedParser[I, P, O, S]) String() string {
+func (d enclosuredParser[I, P, O, S]) String() string {
 	return fmt.Sprintf("%v, %v, %v", d.Prefix, d.Body, d.Suffix)
 }

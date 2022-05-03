@@ -230,7 +230,7 @@ func (a anything[T]) String() string {
 
 type nothing[I comparable] struct{}
 
-// Nothing parses nothing, just leave all of inputs as `remain` and returns `interface{}` as an output.
+// Nothing parses nothing, just leave all of inputs as `remain` and returns `struct{}` as an output.
 func Nothing[I comparable]() Parser[I, struct{}] {
 	return nothing[I]{}
 }

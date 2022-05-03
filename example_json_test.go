@@ -13,15 +13,15 @@ func ToInterface[I any](x I) (interface{}, error) {
 }
 
 var (
-	quote = pc.Tag("DOUBLE_QUOTE", []rune(`"`))
+	quote = pc.TagStr("DOUBLE_QUOTE", `"`)
 
 	optionalSpaces = pc.Optional(pc.MultiSpacesOrNewlines)
 
-	str = pc.Named("STRING_LITERAL", pc.Convert(pc.Delimited(
+	str = pc.Named("STRING_LITERAL", pc.Convert(pc.WithEnclosure(
 		quote,
 		pc.Many(0, pc.Or(
 			pc.WithPrefix(
-				pc.Tag("ESCAPE", []rune{'\\'}),
+				pc.TagStr("ESCAPE", `\`),
 				pc.Or(
 					pc.TagAs("QUOTATION_MARK", []rune(`"`), '"'),
 					pc.TagAs("REVERSE_SOLIDUS", []rune(`\`), '\\'),
@@ -35,7 +35,7 @@ var (
 			),
 			pc.Convert(
 				pc.Repeat(2, pc.WithPrefix(
-					pc.Tag("UNICODE", []rune(`\u`)),
+					pc.TagStr("UNICODE", `\u`),
 					pc.Repeat(4, pc.SingleHexDigit),
 				)),
 				func(xs [][]rune) (rune, error) {
@@ -55,7 +55,7 @@ var (
 			),
 			pc.Convert(
 				pc.WithPrefix(
-					pc.Tag("UNICODE", []rune(`\u`)),
+					pc.TagStr("UNICODE", `\u`),
 					pc.Repeat(4, pc.SingleHexDigit),
 				),
 				func(xs []rune) (rune, error) {
@@ -70,7 +70,7 @@ var (
 		quote,
 	), pc.ToString))
 
-	number = pc.Named("NUMBER_LITERAL", pc.Convert(pc.MatchOnly(pc.Sequence(
+	number = pc.Named("NUMBER_LITERAL", pc.Convert(pc.MatchOnly(
 		pc.Optional(pc.Tag("MINUS", []rune("-"))),
 		pc.Or(
 			pc.Tag("ZERO", []rune("0")),
@@ -79,18 +79,18 @@ var (
 				pc.Optional(pc.MultiDigits),
 			)),
 		),
-		pc.Optional(pc.MatchOnly(pc.Sequence(
+		pc.Optional(pc.MatchOnly(
 			pc.Tag("PERIOD", []rune(".")),
 			pc.MultiDigits,
-		))),
-		pc.Optional(pc.MatchOnly(pc.Sequence(
+		)),
+		pc.Optional(pc.MatchOnly(
 			pc.Sequence(
 				pc.OneOf("E", []rune("eE")),
 				pc.Optional(pc.OneOf("SIGN", []rune("+-"))),
 			),
 			pc.MultiDigits,
-		))),
-	)), pc.ToFloat))
+		)),
+	), pc.ToFloat))
 
 	null = pc.TagAs("NULL", []rune("null"), (interface{})(nil))
 
@@ -99,14 +99,14 @@ var (
 		pc.TagAs("FALSE", []rune("false"), false),
 	)
 
-	beginArray = pc.WithSuffix(pc.Tag("BEGIN_ARRAY", []rune("[")), optionalSpaces)
-	endArray   = pc.WithPrefix(optionalSpaces, pc.Tag("END_ARRAY", []rune("]")))
+	beginArray = pc.WithSuffix(pc.TagStr("BEGIN_ARRAY", "["), optionalSpaces)
+	endArray   = pc.WithPrefix(optionalSpaces, pc.TagStr("END_ARRAY", "]"))
 
-	beginObject = pc.WithSuffix(pc.Tag("BEGIN_OBJECT", []rune("{")), optionalSpaces)
-	endObject   = pc.WithPrefix(optionalSpaces, pc.Tag("END_OBJECT", []rune("}")))
+	beginObject = pc.WithSuffix(pc.TagStr("BEGIN_OBJECT", "{"), optionalSpaces)
+	endObject   = pc.WithPrefix(optionalSpaces, pc.TagStr("END_OBJECT", "}"))
 
-	nameSeparator  = pc.Delimited(optionalSpaces, pc.Tag("NAME_SEPARATOR", []rune(":")), optionalSpaces)
-	valueSeparator = pc.Delimited(optionalSpaces, pc.Tag("VALUE_SEPARATOR", []rune(",")), optionalSpaces)
+	nameSeparator  = pc.WithEnclosure(optionalSpaces, pc.TagStr("NAME_SEPARATOR", ":"), optionalSpaces)
+	valueSeparator = pc.WithEnclosure(optionalSpaces, pc.TagStr("VALUE_SEPARATOR", ","), optionalSpaces)
 
 	keyValuePair = pc.Pair(
 		pc.WithSuffix(
@@ -116,7 +116,7 @@ var (
 		jsonValue,
 	)
 
-	jsonValue = pc.Named("JSON_VALUE", pc.Delimited(
+	jsonValue = pc.Named("JSON_VALUE", pc.WithEnclosure(
 		optionalSpaces,
 		pc.Or(
 			null,
@@ -137,7 +137,7 @@ func (a Array) String() string {
 }
 
 func (a Array) Parse(input []rune, verbose bool) ([]interface{}, []rune, error) {
-	return pc.Delimited(
+	return pc.WithEnclosure(
 		beginArray,
 		pc.SeparatedList(0, valueSeparator, jsonValue),
 		endArray,
@@ -151,7 +151,7 @@ func (o Object) String() string {
 }
 
 func (o Object) Parse(input []rune, verbose bool) (map[string]interface{}, []rune, error) {
-	xs, remain, err := pc.Delimited(
+	xs, remain, err := pc.WithEnclosure(
 		beginObject,
 		pc.SeparatedList(0, valueSeparator, keyValuePair),
 		endObject,

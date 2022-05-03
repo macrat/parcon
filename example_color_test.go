@@ -23,7 +23,7 @@ var HexNumber = pc.Convert(
 
 var ColorParser = pc.Convert(
 	pc.WithPrefix(
-		pc.Tag("HASH", []rune("#")),
+		pc.TagStr("HASH", "#"),
 		pc.Repeat(3, HexNumber),
 	),
 	func(input []uint8) (Color, error) {

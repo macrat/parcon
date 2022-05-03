@@ -22,25 +22,6 @@ func ExampleConvert() {
 	// output:123 remain:"" err:<nil>
 }
 
-func ExampleMap() {
-	parser := parcon.Map(
-		parcon.SeparatedList(
-			0,
-			parcon.MultiSpaces,
-			parcon.MultiDigits,
-		),
-		func(input []rune) (int, error) {
-			return strconv.Atoi(string(input))
-		},
-	)
-
-	output, remain, err := parser.Parse([]rune("123 456 789"), true)
-	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
-
-	// OUTPUT:
-	// output:[]int{123, 456, 789} remain:"" err:<nil>
-}
-
 func ExampleMatchOnly() {
 	parser := parcon.MatchOnly(parcon.Sequence(
 		parcon.Many(1, parcon.MultiAlphas),
@@ -63,15 +44,22 @@ func ExampleMatchOnly() {
 }
 
 func ExampleReplace() {
-	parser := parcon.Many(0, parcon.Or(
-		parcon.Replace(parcon.Tag("NEWLINE", []rune(`\n`)), '\n'),
-		parcon.Anything[rune](),
-	))
+	parser := parcon.Or(
+		// "yes" or "true" are true values.
+		parcon.Replace(parcon.Or(
+			parcon.TagStr("YES", "yes"),
+			parcon.TagStr("TRUE", "true"),
+		), true),
+		parcon.Replace(parcon.MultiAlphas, false), // otherwise, parse as false value.
+	)
 
-	output, _, _ := parser.Parse([]rune(`hello\nworld`), true)
-	fmt.Println(string(output))
+	output, _, _ := parser.Parse([]rune("yes"), true)
+	fmt.Println(output)
+
+	output, _, _ = parser.Parse([]rune("no"), true)
+	fmt.Println(output)
 
 	// OUTPUT:
-	// hello
-	// world
+	// true
+	// false
 }

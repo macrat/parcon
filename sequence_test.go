@@ -7,11 +7,11 @@ import (
 )
 
 func ExampleSequence() {
-	parser := parcon.Map(parcon.Sequence(
-		parcon.Tag("HELLO", []rune("hello")),
-		parcon.MultiSpaces,
-		parcon.Tag("WORLD", []rune("world")),
-	), parcon.ToString)
+	parser := parcon.Sequence(
+		parcon.TagStr("HELLO", "hello"),
+		parcon.Convert(parcon.MultiSpaces, parcon.ToString),
+		parcon.TagStr("WORLD", "world"),
+	)
 
 	output, remain, err := parser.Parse([]rune("hello   world"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
@@ -35,11 +35,11 @@ func ExamplePair() {
 	// second: 123
 }
 
-func ExampleDelimited() {
-	parser := parcon.Delimited(
-		parcon.Tag("OPEN_PAREN", []rune("(")),
+func ExampleWithEnclosure() {
+	parser := parcon.WithEnclosure(
+		parcon.TagStr("OPEN_PAREN", "("),
 		parcon.NoneOfStr("NOT_PAREN", "()"),
-		parcon.Tag("CLOSE_PAREN", []rune(")")),
+		parcon.TagStr("CLOSE_PAREN", ")"),
 	)
 
 	output, remain, err := parser.Parse([]rune("(hello world)"), true)
@@ -51,7 +51,7 @@ func ExampleDelimited() {
 
 func ExampleWithPrefix() {
 	parser := parcon.WithPrefix(
-		parcon.Tag("AT_SYMBOL", []rune("@")),
+		parcon.TagStr("AT_SYMBOL", "@"),
 		parcon.MultiAlphas,
 	)
 
@@ -65,7 +65,7 @@ func ExampleWithPrefix() {
 func ExampleWithSuffix() {
 	parser := parcon.WithSuffix(
 		parcon.NoneOfStr("NOT_SEMICOLON", ";"),
-		parcon.Tag("SEMICOLON", []rune(";")),
+		parcon.TagStr("SEMICOLON", ";"),
 	)
 
 	output, remain, err := parser.Parse([]rune("hello world; foo bar;"), true)

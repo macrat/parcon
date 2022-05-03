@@ -6,11 +6,31 @@ import (
 	"github.com/macrat/parcon"
 )
 
+func ExampleTagAs() {
+	parser := parcon.TagAs("HELLO", []rune("hello"), "greetings")
+
+	output, remain, err := parser.Parse([]rune("hello world"), true)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+
+	// OUTPUT:
+	// output:"greetings" remain:" world" err:<nil>
+}
+
 func ExampleTag() {
 	parser := parcon.Tag("HELLO", []rune("hello"))
 
 	output, remain, err := parser.Parse([]rune("hello world"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+
+	// OUTPUT:
+	// output:"hello" remain:" world" err:<nil>
+}
+
+func ExampleTagStr() {
+	parser := parcon.TagStr("HELLO", "hello")
+
+	output, remain, err := parser.Parse([]rune("hello world"), true)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
 	// output:"hello" remain:" world" err:<nil>
@@ -36,6 +56,16 @@ func ExampleOneOfList() {
 	// output:"123" remain:" hello" err:<nil>
 }
 
+func ExampleOneOfStr() {
+	parser := parcon.OneOfStr("DIGITS", "0123456789")
+
+	output, remain, err := parser.Parse([]rune("123 hello"), true)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
+
+	// OUTPUT:
+	// output:"123" remain:" hello" err:<nil>
+}
+
 func ExampleNoneOf() {
 	parser := parcon.NoneOf("DIGIT", []rune("0123456789"))
 
@@ -44,6 +74,26 @@ func ExampleNoneOf() {
 
 	// OUTPUT:
 	// output:"h" remain:"ello 123" err:<nil>
+}
+
+func ExampleNoneOfList() {
+	parser := parcon.NoneOfList("DIGITS", []rune("0123456789"))
+
+	output, remain, err := parser.Parse([]rune("hello 123"), true)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
+
+	// OUTPUT:
+	// output:"hello " remain:"123" err:<nil>
+}
+
+func ExampleNoneOfStr() {
+	parser := parcon.NoneOfStr("DIGITS", "0123456789")
+
+	output, remain, err := parser.Parse([]rune("hello 123"), true)
+	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
+
+	// OUTPUT:
+	// output:"hello " remain:"123" err:<nil>
 }
 
 func ExampleAnything() {

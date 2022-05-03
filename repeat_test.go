@@ -7,11 +7,11 @@ import (
 )
 
 func ExampleSeparatedList() {
-	parser := parcon.Map(parcon.SeparatedList(
+	parser := parcon.SeparatedList(
 		0,
-		parcon.Tag("COMMA", []rune(",")),
-		parcon.MultiDigits,
-	), parcon.ToString)
+		parcon.TagStr("COMMA", ","),
+		parcon.Convert(parcon.MultiDigits, parcon.ToString),
+	)
 
 	output, remain, err := parser.Parse([]rune("123,456,789"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
@@ -25,16 +25,16 @@ func ExampleSeparatedList() {
 	// OUTPUT:
 	// output:[]string{"123", "456", "789"} remain:"" err:<nil>
 	// output:[]string{"123"} remain:",abc" err:<nil>
-	// output:[]string(nil) remain:"abc" err:<nil>
+	// output:[]string{} remain:"abc" err:<nil>
 }
 
 func ExampleSeparatedListLimited() {
-	parser := parcon.Map(parcon.SeparatedListLimited(
+	parser := parcon.SeparatedListLimited(
 		0,
 		2,
-		parcon.Tag("COMMA", []rune(",")),
-		parcon.MultiDigits,
-	), parcon.ToInt)
+		parcon.TagStr("COMMA", ","),
+		parcon.Convert(parcon.MultiDigits, parcon.ToInt),
+	)
 
 	output, remain, err := parser.Parse([]rune("123,456,789"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
