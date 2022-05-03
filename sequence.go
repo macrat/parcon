@@ -12,11 +12,11 @@ func Sequence[I comparable, O any](parsers ...Parser[I, O]) Parser[I, []O] {
 	return sequenceParser[I, O](parsers)
 }
 
-func (s sequenceParser[I, O]) Parse(input []I) (output []O, remain []I, err error) {
+func (s sequenceParser[I, O]) Parse(input []I, verbose bool) (output []O, remain []I, err error) {
 	remain = input
 	output = make([]O, len(s))
 	for i, p := range s {
-		output[i], remain, err = p.Parse(remain)
+		output[i], remain, err = p.Parse(remain, verbose)
 		if err != nil {
 			return
 		}
@@ -48,13 +48,13 @@ func Pair[I comparable, O1, O2 any](first Parser[I, O1], second Parser[I, O2]) P
 	return pairParser[I, O1, O2]{first, second}
 }
 
-func (p pairParser[I, O1, O2]) Parse(input []I) (output PairValue[O1, O2], remain []I, err error) {
-	output.First, remain, err = p.First.Parse(input)
+func (p pairParser[I, O1, O2]) Parse(input []I, verbose bool) (output PairValue[O1, O2], remain []I, err error) {
+	output.First, remain, err = p.First.Parse(input, verbose)
 	if err != nil {
 		return
 	}
 
-	output.Second, remain, err = p.Second.Parse(remain)
+	output.Second, remain, err = p.Second.Parse(remain, verbose)
 	return
 }
 
@@ -88,18 +88,18 @@ func WithSuffix[I comparable, O, S any](body Parser[I, O], suffix Parser[I, S]) 
 	return delimitedParser[I, struct{}, O, S]{Nothing[I](), body, suffix}
 }
 
-func (d delimitedParser[I, P, O, S]) Parse(input []I) (output O, remain []I, err error) {
-	_, remain, err = d.Prefix.Parse(input)
+func (d delimitedParser[I, P, O, S]) Parse(input []I, verbose bool) (output O, remain []I, err error) {
+	_, remain, err = d.Prefix.Parse(input, verbose)
 	if err != nil {
 		return
 	}
 
-	output, remain, err = d.Body.Parse(remain)
+	output, remain, err = d.Body.Parse(remain, verbose)
 	if err != nil {
 		return
 	}
 
-	_, remain, err = d.Suffix.Parse(remain)
+	_, remain, err = d.Suffix.Parse(remain, verbose)
 	return
 }
 

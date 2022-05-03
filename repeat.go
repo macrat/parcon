@@ -61,7 +61,7 @@ func Repeat[I comparable, O any](num uint, parser Parser[I, O]) Parser[I, []O] {
 	return ManyLimited(num, num, parser)
 }
 
-func (l listParser[I, O, D]) Parse(input []I) (output []O, remain []I, err error) {
+func (l listParser[I, O, D]) Parse(input []I, verbose bool) (output []O, remain []I, err error) {
 	if l.Max == 0 {
 		output = make([]O, 0)
 	} else {
@@ -70,7 +70,7 @@ func (l listParser[I, O, D]) Parse(input []I) (output []O, remain []I, err error
 
 	var o O
 
-	o, remain, err = l.Parser.Parse(input)
+	o, remain, err = l.Parser.Parse(input, verbose && l.Min != 0)
 	if err != nil {
 		if l.Min == 0 {
 			err = nil
@@ -85,12 +85,12 @@ func (l listParser[I, O, D]) Parse(input []I) (output []O, remain []I, err error
 	for l.Max == 0 || count < l.Max {
 		var r []I
 
-		_, r, err = l.Delimiter.Parse(remain)
+		_, r, err = l.Delimiter.Parse(remain, verbose && count < l.Min)
 		if err != nil {
 			break
 		}
 
-		o, r, err = l.Parser.Parse(r)
+		o, r, err = l.Parser.Parse(r, verbose && count < l.Min)
 		if err != nil {
 			break
 		}

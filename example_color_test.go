@@ -36,7 +36,7 @@ var ColorParser = pc.Convert(
 )
 
 func ParseColor(input string) (Color, error) {
-	output, remain, err := ColorParser.Parse([]rune(input))
+	output, remain, err := ColorParser.Parse([]rune(input), true)
 	if err != nil {
 		return Color{}, err
 	}

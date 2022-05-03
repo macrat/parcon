@@ -6,22 +6,25 @@ package parcon
 // Parser is the interface of parsers.
 type Parser[I comparable, O any] interface {
 	// Parse parses `input`, and returns parsed `output`, `remain` slice that not parsed with this parser, and error if it happened.
-	Parse(input []I) (output O, remain []I, err error)
+	//
+	// This method tries to record detail of error if `verbose` is true, otherwise, it can only returns ErrInvalidInput.
+	// ErrInvalidInput has no any detail, and faster than detailed errors like ErrInvalidInputVerbose.
+	Parse(input []I, verbose bool) (output O, remain []I, err error)
 }
 
 // ParserFunc is a function to parse input.
 // This type implements Parser interface.
 //
 // See also: Func
-type ParserFunc[I comparable, O any] func(input []I) (output O, remain []I, err error)
+type ParserFunc[I comparable, O any] func(input []I, verbose bool) (output O, remain []I, err error)
 
 // Parse parses input.
-func (p ParserFunc[I, O]) Parse(input []I) (output O, remain []I, err error) {
-	return p(input)
+func (p ParserFunc[I, O]) Parse(input []I, verbose bool) (output O, remain []I, err error) {
+	return p(input, verbose)
 }
 
 type parserFuncType[I comparable, O any] interface {
-	~func(input []I) (output O, remain []I, err error)
+	~func(input []I, verbose bool) (output O, remain []I, err error)
 }
 
 // Func makes a Parser by a function.
@@ -44,6 +47,6 @@ func (n named[I, O]) String() string {
 	return n.Name
 }
 
-func (n named[I, O]) Parse(input []I) (output O, remain []I, err error) {
-	return n.Parser.Parse(input)
+func (n named[I, O]) Parse(input []I, verbose bool) (output O, remain []I, err error) {
+	return n.Parser.Parse(input, verbose)
 }

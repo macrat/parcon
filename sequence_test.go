@@ -13,7 +13,7 @@ func ExampleSequence() {
 		parcon.Tag("WORLD", []rune("world")),
 	), parcon.ToString)
 
-	output, remain, err := parser.Parse([]rune("hello   world"))
+	output, remain, err := parser.Parse([]rune("hello   world"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -26,7 +26,7 @@ func ExamplePair() {
 		parcon.Convert(parcon.MultiDigits, parcon.ToInt),
 	)
 
-	output, _, _ := parser.Parse([]rune("hello123"))
+	output, _, _ := parser.Parse([]rune("hello123"), true)
 	fmt.Printf("first: %#v\n", output.First)
 	fmt.Printf("second: %#v\n", output.Second)
 
@@ -42,7 +42,7 @@ func ExampleDelimited() {
 		parcon.Tag("CLOSE_PAREN", []rune(")")),
 	)
 
-	output, remain, err := parser.Parse([]rune("(hello world)"))
+	output, remain, err := parser.Parse([]rune("(hello world)"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -55,7 +55,7 @@ func ExampleWithPrefix() {
 		parcon.MultiAlphas,
 	)
 
-	output, remain, err := parser.Parse([]rune("@user"))
+	output, remain, err := parser.Parse([]rune("@user"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
 	// OUTPUT:
@@ -68,7 +68,7 @@ func ExampleWithSuffix() {
 		parcon.Tag("SEMICOLON", []rune(";")),
 	)
 
-	output, remain, err := parser.Parse([]rune("hello world; foo bar;"))
+	output, remain, err := parser.Parse([]rune("hello world; foo bar;"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:

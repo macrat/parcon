@@ -54,7 +54,7 @@ func Benchmark_simpleList(b *testing.B) {
 	input, l := generateSimpleList()
 	b.SetBytes(int64(len(input)))
 
-	output, _, err := parser.Parse(input)
+	output, _, err := parser.Parse(input, true)
 	if err != nil {
 		b.Fatalf("failed to parse: %s", err)
 	}
@@ -64,7 +64,7 @@ func Benchmark_simpleList(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		parser.Parse(input)
+		parser.Parse(input, true)
 	}
 }
 
@@ -82,13 +82,13 @@ func Benchmark_jsonParser(b *testing.B) {
 	input := []rune(fmt.Sprintf(`{%s}`, strings.Join(xs, ", ")))
 	b.SetBytes(int64(len(input)))
 
-	_, _, err := parser.Parse(input)
+	_, _, err := parser.Parse(input, true)
 	if err != nil {
 		b.Fatalf("failed to parse: %s", err)
 	}
 
 	b.ResetTimer()
 	for i := 0; i <= b.N; i++ {
-		parser.Parse(input)
+		parser.Parse(input, true)
 	}
 }

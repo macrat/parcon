@@ -29,13 +29,21 @@ func TagStr(name string, tag string) Parser[rune, string] {
 	return Convert(Tag(name, []rune(tag)), ToString)
 }
 
-func (t tagParser[T]) Parse(input []T) (output []T, remain []T, err error) {
+func (t tagParser[T]) Parse(input []T, verbose bool) (output []T, remain []T, err error) {
 	if len(t.Tag) > len(input) {
-		return nil, nil, ErrUnexpectedInput[T]{t.Name, input}
+		if verbose {
+			return nil, nil, ErrInvalidInputVerbose[T]{Expected: t.Name, Input: input}
+		} else {
+			return nil, nil, ErrInvalidInput
+		}
 	}
 	for i := range t.Tag {
 		if t.Tag[i] != input[i] {
-			return nil, nil, ErrUnexpectedInput[T]{t.Name, input}
+			if verbose {
+				return nil, nil, ErrInvalidInputVerbose[T]{Expected: t.Name, Input: input}
+			} else {
+				return nil, nil, ErrInvalidInput
+			}
 		}
 	}
 
@@ -60,11 +68,15 @@ func OneOf[T comparable](name string, list []T) Parser[T, T] {
 	return oneOfParser[T]{name, list}
 }
 
-func (o oneOfParser[T]) Parse(input []T) (output T, remain []T, err error) {
+func (o oneOfParser[T]) Parse(input []T, verbose bool) (output T, remain []T, err error) {
 	if len(input) > 0 && contains(o.List, input[0]) {
 		return input[0], input[1:], nil
 	} else {
-		err = ErrUnexpectedInput[T]{o.Name, input}
+		if verbose {
+			err = ErrInvalidInputVerbose[T]{Expected: o, Input: input}
+		} else {
+			err = ErrInvalidInput
+		}
 		return
 	}
 }
@@ -92,9 +104,13 @@ func OneOfStr(name string, list string) Parser[rune, string] {
 	return Convert(OneOfList(name, []rune(list)), ToString)
 }
 
-func (o oneOfListParser[T]) Parse(input []T) (output []T, remain []T, err error) {
+func (o oneOfListParser[T]) Parse(input []T, verbose bool) (output []T, remain []T, err error) {
 	if len(input) == 0 || !contains(o.List, input[0]) {
-		err = ErrUnexpectedInput[T]{o.Name, input}
+		if verbose {
+			err = ErrInvalidInputVerbose[T]{Expected: o, Input: input}
+		} else {
+			err = ErrInvalidInput
+		}
 		return
 	}
 
@@ -123,11 +139,15 @@ func NoneOf[T comparable](name string, list []T) Parser[T, T] {
 	return noneOfParser[T]{name, list}
 }
 
-func (n noneOfParser[T]) Parse(input []T) (output T, remain []T, err error) {
+func (n noneOfParser[T]) Parse(input []T, verbose bool) (output T, remain []T, err error) {
 	if len(input) > 0 && !contains(n.List, input[0]) {
 		return input[0], input[1:], nil
 	} else {
-		err = ErrUnexpectedInput[T]{n.Name, input}
+		if verbose {
+			err = ErrInvalidInputVerbose[T]{n.Name, input}
+		} else {
+			err = ErrInvalidInput
+		}
 		return
 	}
 }
@@ -155,9 +175,13 @@ func NoneOfStr(name string, list string) Parser[rune, string] {
 	return Convert(NoneOfList(name, []rune(list)), ToString)
 }
 
-func (n noneOfListParser[T]) Parse(input []T) (output []T, remain []T, err error) {
+func (n noneOfListParser[T]) Parse(input []T, verbose bool) (output []T, remain []T, err error) {
 	if len(input) == 0 || contains(n.List, input[0]) {
-		err = ErrUnexpectedInput[T]{n.Name, input}
+		if verbose {
+			err = ErrInvalidInputVerbose[T]{n.Name, input}
+		} else {
+			err = ErrInvalidInput
+		}
 		return
 	}
 
@@ -181,9 +205,13 @@ func Anything[T comparable]() Parser[T, T] {
 	return anything[T]{}
 }
 
-func (a anything[T]) Parse(input []T) (output T, remain []T, err error) {
+func (a anything[T]) Parse(input []T, verbose bool) (output T, remain []T, err error) {
 	if len(input) == 0 {
-		err = ErrUnexpectedInput[T]{"ANYTHING", input}
+		if verbose {
+			err = ErrInvalidInputVerbose[T]{"ANYTHING", input}
+		} else {
+			err = ErrInvalidInput
+		}
 		return
 	}
 	return input[0], input[1:], nil
@@ -200,7 +228,7 @@ func Nothing[I comparable]() Parser[I, struct{}] {
 	return nothing[I]{}
 }
 
-func (n nothing[I]) Parse(input []I) (output struct{}, remain []I, err error) {
+func (n nothing[I]) Parse(input []I, verbose bool) (output struct{}, remain []I, err error) {
 	return struct{}{}, input, nil
 }
 
@@ -219,11 +247,15 @@ func TakeSingle[I comparable](name string, fn func(I) bool) Parser[I, I] {
 	return takeSingleParser[I]{name, fn}
 }
 
-func (t takeSingleParser[I]) Parse(input []I) (output I, remain []I, err error) {
+func (t takeSingleParser[I]) Parse(input []I, verbose bool) (output I, remain []I, err error) {
 	if len(input) > 0 && t.Func(input[0]) {
 		return input[0], input[1:], nil
 	} else {
-		err = ErrUnexpectedInput[I]{t.Name, input}
+		if verbose {
+			err = ErrInvalidInputVerbose[I]{t.Name, input}
+		} else {
+			err = ErrInvalidInput
+		}
 		return
 	}
 }
@@ -243,9 +275,13 @@ func TakeWhile[I comparable](name string, fn func(I) bool) Parser[I, []I] {
 	return takeWhileParser[I]{name, fn}
 }
 
-func (t takeWhileParser[I]) Parse(input []I) (output []I, remain []I, err error) {
+func (t takeWhileParser[I]) Parse(input []I, verbose bool) (output []I, remain []I, err error) {
 	if len(input) == 0 || !t.Func(input[0]) {
-		err = ErrUnexpectedInput[I]{t.Name, input}
+		if verbose {
+			err = ErrInvalidInputVerbose[I]{t.Name, input}
+		} else {
+			err = ErrInvalidInput
+		}
 		return
 	}
 

@@ -13,13 +13,13 @@ func ExampleSeparatedList() {
 		parcon.MultiDigits,
 	), parcon.ToString)
 
-	output, remain, err := parser.Parse([]rune("123,456,789"))
+	output, remain, err := parser.Parse([]rune("123,456,789"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
-	output, remain, err = parser.Parse([]rune("123,abc"))
+	output, remain, err = parser.Parse([]rune("123,abc"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
-	output, remain, err = parser.Parse([]rune("abc"))
+	output, remain, err = parser.Parse([]rune("abc"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -36,7 +36,7 @@ func ExampleSeparatedListLimited() {
 		parcon.MultiDigits,
 	), parcon.ToInt)
 
-	output, remain, err := parser.Parse([]rune("123,456,789"))
+	output, remain, err := parser.Parse([]rune("123,456,789"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -46,7 +46,7 @@ func ExampleSeparatedListLimited() {
 func ExampleMany() {
 	parser := parcon.Many(0, parcon.TagStr("ITEM", "ab_"))
 
-	output, remain, err := parser.Parse([]rune("ab_ab_ab_cd_"))
+	output, remain, err := parser.Parse([]rune("ab_ab_ab_cd_"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -56,7 +56,7 @@ func ExampleMany() {
 func ExampleManyLimited() {
 	parser := parcon.ManyLimited(0, 2, parcon.TagStr("ITEM", "ab_"))
 
-	output, remain, err := parser.Parse([]rune("ab_ab_ab_cd_"))
+	output, remain, err := parser.Parse([]rune("ab_ab_ab_cd_"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -66,7 +66,7 @@ func ExampleManyLimited() {
 func ExampleRepeat() {
 	parser := parcon.Repeat(3, parcon.SingleDigit)
 
-	output, remain, err := parser.Parse([]rune("12345"))
+	output, remain, err := parser.Parse([]rune("12345"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
 	// OUTPUT:

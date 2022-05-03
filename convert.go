@@ -19,9 +19,9 @@ func Convert[I comparable, O1, O2 any](parser Parser[I, O1], fn ConvertFunc[O1, 
 	return converter[I, O1, O2]{parser, fn}
 }
 
-func (c converter[I, O1, O2]) Parse(input []I) (output O2, remain []I, err error) {
+func (c converter[I, O1, O2]) Parse(input []I, verbose bool) (output O2, remain []I, err error) {
 	var o O1
-	o, remain, err = c.Parser.Parse(input)
+	o, remain, err = c.Parser.Parse(input, verbose)
 	if err != nil {
 		return
 	}
@@ -44,9 +44,9 @@ func Map[I comparable, O1, O2 any](parser Parser[I, []O1], fn ConvertFunc[O1, O2
 	return mapper[I, O1, O2]{parser, fn}
 }
 
-func (m mapper[I, O1, O2]) Parse(input []I) (output []O2, remain []I, err error) {
+func (m mapper[I, O1, O2]) Parse(input []I, verbose bool) (output []O2, remain []I, err error) {
 	var o1s []O1
-	o1s, remain, err = m.Parser.Parse(input)
+	o1s, remain, err = m.Parser.Parse(input, verbose)
 	if err != nil {
 		return
 	}
@@ -76,8 +76,8 @@ func MatchOnly[I comparable, O any](parser Parser[I, O]) Parser[I, []I] {
 	return matchOnly[I, O]{parser}
 }
 
-func (m matchOnly[I, O]) Parse(input []I) (output []I, remain []I, err error) {
-	_, remain, err = m.Parser.Parse(input)
+func (m matchOnly[I, O]) Parse(input []I, verbose bool) (output []I, remain []I, err error) {
+	_, remain, err = m.Parser.Parse(input, verbose)
 	if err != nil {
 		return
 	}
@@ -103,8 +103,8 @@ func (r replace[I, O1, O2]) String() string {
 	return fmt.Sprint(r.Parser)
 }
 
-func (r replace[I, O1, O2]) Parse(input []I) (output O2, remain []I, err error) {
-	_, remain, err = r.Parser.Parse(input)
+func (r replace[I, O1, O2]) Parse(input []I, verbose bool) (output O2, remain []I, err error) {
+	_, remain, err = r.Parser.Parse(input, verbose)
 	if err != nil {
 		return
 	}

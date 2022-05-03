@@ -9,10 +9,10 @@ import (
 func ExampleOptional() {
 	parser := parcon.Optional(parcon.TagStr("HELLO", "hello"))
 
-	output, remain, err := parser.Parse([]rune("hello world"))
+	output, remain, err := parser.Parse([]rune("hello world"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
-	output, remain, err = parser.Parse([]rune("foo bar"))
+	output, remain, err = parser.Parse([]rune("foo bar"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -23,10 +23,10 @@ func ExampleOptional() {
 func ExampleOptionalWithDefault() {
 	parser := parcon.OptionalWithDefault(parcon.TagStr("HELLO", "hello"), "not-found")
 
-	output, remain, err := parser.Parse([]rune("hello world"))
+	output, remain, err := parser.Parse([]rune("hello world"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
-	output, remain, err = parser.Parse([]rune("foo bar"))
+	output, remain, err = parser.Parse([]rune("foo bar"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -40,17 +40,17 @@ func ExampleOr() {
 		parcon.TagStr("WORLD", "world"),
 	)
 
-	output, remain, err := parser.Parse([]rune("hello world"))
+	output, remain, err := parser.Parse([]rune("hello world"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
-	output, remain, err = parser.Parse([]rune("world hello"))
+	output, remain, err = parser.Parse([]rune("world hello"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
-	_, _, err = parser.Parse([]rune("foo bar"))
+	_, _, err = parser.Parse([]rune("foo bar"), true)
 	fmt.Printf("err:%v\n", err)
 
 	// OUTPUT:
 	// output:"hello" remain:" world" err:<nil>
 	// output:"world" remain:" hello" err:<nil>
-	// err:expected one of [HELLO] [WORLD] but got "foo bar"
+	// err:invalid input: expected one of [HELLO] [WORLD] but got "foo bar"
 }

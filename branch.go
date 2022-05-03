@@ -24,8 +24,8 @@ func Optional[I comparable, O any](parser Parser[I, O]) Parser[I, O] {
 	return optionalParser[I, O]{Parser: parser}
 }
 
-func (o optionalParser[I, O]) Parse(input []I) (output O, remain []I, err error) {
-	output, remain, err = o.Parser.Parse(input)
+func (o optionalParser[I, O]) Parse(input []I, verbose bool) (output O, remain []I, err error) {
+	output, remain, err = o.Parser.Parse(input, false)
 	if err != nil {
 		return o.Default, input, nil
 	}
@@ -43,14 +43,18 @@ func Or[I comparable, O any](parsers ...Parser[I, O]) Parser[I, O] {
 	return orParser[I, O](parsers)
 }
 
-func (o orParser[I, O]) Parse(input []I) (output O, remain []I, err error) {
+func (o orParser[I, O]) Parse(input []I, verbose bool) (output O, remain []I, err error) {
 	for _, p := range o {
-		output, remain, err = p.Parse(input)
+		output, remain, err = p.Parse(input, false)
 		if err == nil {
 			return
 		}
 	}
-	err = ErrUnexpectedInput[I]{Name: o.String(), Input: input}
+	if verbose {
+		err = ErrInvalidInputVerbose[I]{Expected: o, Input: input}
+	} else {
+		err = ErrInvalidInput
+	}
 	return
 }
 

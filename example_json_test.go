@@ -113,7 +113,7 @@ func (a Array) String() string {
 	return "ARRAY"
 }
 
-func (a Array) Parse(input []rune) ([]interface{}, []rune, error) {
+func (a Array) Parse(input []rune, verbose bool) ([]interface{}, []rune, error) {
 	return pc.Delimited(
 		pc.Sequence(beginArray, optionalSpaces),
 		pc.SeparatedList[rune, interface{}](
@@ -122,7 +122,7 @@ func (a Array) Parse(input []rune) ([]interface{}, []rune, error) {
 			JsonValue{},
 		),
 		pc.Sequence(optionalSpaces, endArray),
-	).Parse(input)
+	).Parse(input, verbose)
 }
 
 type Object struct{}
@@ -131,7 +131,7 @@ func (o Object) String() string {
 	return "OBJECT"
 }
 
-func (o Object) Parse(input []rune) (map[string]interface{}, []rune, error) {
+func (o Object) Parse(input []rune, verbose bool) (map[string]interface{}, []rune, error) {
 	keyValue := pc.Pair[rune, string, interface{}](
 		pc.WithSuffix(
 			str,
@@ -148,7 +148,7 @@ func (o Object) Parse(input []rune) (map[string]interface{}, []rune, error) {
 			keyValue,
 		),
 		pc.Sequence(optionalSpaces, endObject),
-	).Parse(input)
+	).Parse(input, verbose)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -166,7 +166,7 @@ func (j JsonValue) String() string {
 	return "JSON_VALUE"
 }
 
-func (j JsonValue) Parse(input []rune) (interface{}, []rune, error) {
+func (j JsonValue) Parse(input []rune, verbose bool) (interface{}, []rune, error) {
 	return pc.Delimited(
 		optionalSpaces,
 		pc.Or(
@@ -178,12 +178,12 @@ func (j JsonValue) Parse(input []rune) (interface{}, []rune, error) {
 			pc.Convert[rune, map[string]interface{}](Object{}, ToInterface[map[string]interface{}]),
 		),
 		optionalSpaces,
-	).Parse(input)
+	).Parse(input, verbose)
 }
 
 // Parse JSON that defined in RFC8259
 func ParseJson(s string) (interface{}, error) {
-	output, remain, err := JsonValue{}.Parse([]rune(s))
+	output, remain, err := JsonValue{}.Parse([]rune(s), true)
 	if err != nil {
 		return nil, err
 	}

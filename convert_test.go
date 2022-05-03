@@ -15,7 +15,7 @@ func ExampleConvert() {
 		},
 	)
 
-	output, remain, err := parser.Parse([]rune("123"))
+	output, remain, err := parser.Parse([]rune("123"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -34,7 +34,7 @@ func ExampleMap() {
 		},
 	)
 
-	output, remain, err := parser.Parse([]rune("123 456 789"))
+	output, remain, err := parser.Parse([]rune("123 456 789"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", output, string(remain), err)
 
 	// OUTPUT:
@@ -47,19 +47,19 @@ func ExampleMatchOnly() {
 		parcon.Many(0, parcon.MultiDigits),
 	))
 
-	output, remain, err := parser.Parse([]rune("hello123"))
+	output, remain, err := parser.Parse([]rune("hello123"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
-	output, remain, err = parser.Parse([]rune("hello"))
+	output, remain, err = parser.Parse([]rune("hello"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
-	output, remain, err = parser.Parse([]rune("123hello"))
+	output, remain, err = parser.Parse([]rune("123hello"), true)
 	fmt.Printf("err:%v\n", err)
 
 	// OUTPUT:
 	// output:"hello123" remain:"" err:<nil>
 	// output:"hello" remain:"" err:<nil>
-	// err:expected ALPHA but got "123hello"
+	// err:invalid input: expected ALPHA but got "123hello"
 }
 
 func ExampleReplace() {
@@ -68,7 +68,7 @@ func ExampleReplace() {
 		parcon.Anything[rune](),
 	))
 
-	output, _, _ := parser.Parse([]rune(`hello\nworld`))
+	output, _, _ := parser.Parse([]rune(`hello\nworld`), true)
 	fmt.Println(string(output))
 
 	// OUTPUT:

@@ -9,7 +9,7 @@ import (
 func ExampleTag() {
 	parser := parcon.Tag("HELLO", []rune("hello"))
 
-	output, remain, err := parser.Parse([]rune("hello world"))
+	output, remain, err := parser.Parse([]rune("hello world"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
 	// OUTPUT:
@@ -19,7 +19,7 @@ func ExampleTag() {
 func ExampleOneOf() {
 	parser := parcon.OneOf("DIGIT", []rune("0123456789"))
 
-	output, remain, err := parser.Parse([]rune("123 hello"))
+	output, remain, err := parser.Parse([]rune("123 hello"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
 	// OUTPUT:
@@ -29,7 +29,7 @@ func ExampleOneOf() {
 func ExampleOneOfList() {
 	parser := parcon.OneOfList("DIGITS", []rune("0123456789"))
 
-	output, remain, err := parser.Parse([]rune("123 hello"))
+	output, remain, err := parser.Parse([]rune("123 hello"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
 	// OUTPUT:
@@ -39,7 +39,7 @@ func ExampleOneOfList() {
 func ExampleNoneOf() {
 	parser := parcon.NoneOf("DIGIT", []rune("0123456789"))
 
-	output, remain, err := parser.Parse([]rune("hello 123"))
+	output, remain, err := parser.Parse([]rune("hello 123"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
 	// OUTPUT:
@@ -49,10 +49,10 @@ func ExampleNoneOf() {
 func ExampleAnything() {
 	parser := parcon.Anything[rune]()
 
-	output, remain, err := parser.Parse([]rune("hello world"))
+	output, remain, err := parser.Parse([]rune("hello world"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
-	output, remain, err = parser.Parse(remain)
+	output, remain, err = parser.Parse(remain, true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
 	// OUTPUT:
@@ -63,7 +63,7 @@ func ExampleAnything() {
 func ExampleNothing() {
 	parser := parcon.Nothing[rune]()
 
-	output, remain, err := parser.Parse([]rune("hello world"))
+	output, remain, err := parser.Parse([]rune("hello world"), true)
 	fmt.Printf("%#v\n", output)
 	fmt.Printf("%#v\n", string(remain))
 	fmt.Println(err)
@@ -79,19 +79,19 @@ func ExampleTakeSingle() {
 		return 'a' <= c && c <= 'c'
 	})
 
-	output, remain, err := parser.Parse([]rune("abc"))
+	output, remain, err := parser.Parse([]rune("abc"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
-	output, remain, err = parser.Parse([]rune("bcd"))
+	output, remain, err = parser.Parse([]rune("bcd"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
-	_, _, err = parser.Parse([]rune("def"))
+	_, _, err = parser.Parse([]rune("def"), true)
 	fmt.Printf("err:%v\n", err)
 
 	// OUTPUT:
 	// output:"a" remain:"bc" err:<nil>
 	// output:"b" remain:"cd" err:<nil>
-	// err:expected ABC but got "def"
+	// err:invalid input: expected ABC but got "def"
 }
 
 func ExampleTakeWhile() {
@@ -99,7 +99,7 @@ func ExampleTakeWhile() {
 		return c == 'a' || c == 'b' || c == 'c'
 	})
 
-	output, remain, err := parser.Parse([]rune("abcdef"))
+	output, remain, err := parser.Parse([]rune("abcdef"), true)
 	fmt.Printf("output:%#v remain:%#v err:%v\n", string(output), string(remain), err)
 
 	// OUTPUT:
